@@ -12,6 +12,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import { contentPadding } from '../theme/layout';
+import { LinearGradient } from '../components/Gradient';
 
 const OTHER_USER = { id: '1', name: 'Sarah Liao', initials: 'SL', color: '#8B7FF5' };
 const ME = { id: 'me', name: 'You', initials: 'YO', color: '#C4A97D', isMe: true };
@@ -94,6 +96,7 @@ export function DMScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={colors.gradientBackground} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -154,7 +157,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: contentPadding,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -167,11 +170,11 @@ const styles = StyleSheet.create({
   },
   headerName: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textPrimary,
   },
   avatar: { alignItems: 'center', justifyContent: 'center' },
-  list: { padding: 16, paddingBottom: 8 },
+  list: { paddingVertical: 16, paddingHorizontal: contentPadding, paddingBottom: 8 },
   msgRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -197,11 +200,13 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     lineHeight: 20,
   },
   time: {
     fontSize: 10,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     marginTop: 4,
     marginLeft: 2,
@@ -210,7 +215,7 @@ const styles = StyleSheet.create({
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: 12,
+    paddingHorizontal: contentPadding,
     paddingVertical: 10,
     paddingBottom: Platform.OS === 'ios' ? 28 : 12,
     borderTopWidth: 1,
@@ -226,6 +231,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     borderWidth: 1,
     borderColor: colors.border,

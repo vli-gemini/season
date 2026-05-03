@@ -1,102 +1,157 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  TouchableOpacity,
+  Animated,
+  TouchableWithoutFeedback,
   Dimensions,
-  ImageBackground,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from '../components/Gradient';
 import { colors } from '../theme/colors';
+import { contentPadding } from '../theme/layout';
 import { Button } from '../components/Button';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const STORY_DURATION = 5000;
+
+const SLIDE_GRADIENTS = [
+  ['#5D4463', '#568C89'],
+  ['#5D4463', '#568C89'],
+  ['#5D4463', '#568C89'],
+];
 
 const SLIDES = [
   {
     id: '1',
     headline: 'Eight creators.\nChosen for exactly\nwhere you are.',
     cta: 'Find your people',
-    bg: require('../../assets/onboarding1.jpg'),
   },
   {
     id: '2',
     headline: 'Thirty days.\nOne season.\nMeaningful because it ends.',
     cta: 'Find your people',
-    bg: require('../../assets/onboarding2.jpg'),
   },
   {
     id: '3',
     headline: 'Your next season starts\nwith the right people.',
     cta: 'Find your people',
-    bg: require('../../assets/onboarding3.jpg'),
   },
 ];
 
+function StoryProgressBars({ total, activeIndex, progressAnim }) {
+  return (
+    <View style={bars.row}>
+      {Array.from({ length: total }).map((_, i) => {
+        const isPast = i < activeIndex;
+        const isActive = i === activeIndex;
+
+        const fillWidth = isActive
+          ? progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
+          : isPast
+          ? '100%'
+          : '0%';
+
+        return (
+          <View key={i} style={bars.track}>
+            <Animated.View style={[bars.fill, { width: fillWidth }]} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const bars = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: contentPadding,
+    paddingTop: 56,
+  },
+  track: {
+    flex: 1,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 2,
+  },
+});
+
 export function OnboardingScreen({ navigation }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef(null);
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const animationRef = useRef(null);
 
-  const handleScroll = (event) => {
-    const index = Math.round(event.nativeEvent.contentOffset.x / width);
+  const goTo = (index) => {
+    if (index >= SLIDES.length) {
+      navigation.replace('Quiz', { questionIndex: 0 });
+      return;
+    }
+    if (index < 0) return;
+    progressAnim.setValue(0);
     setActiveIndex(index);
   };
 
-  const handleCta = () => {
-    if (activeIndex < SLIDES.length - 1) {
-      flatListRef.current?.scrollToIndex({ index: activeIndex + 1 });
+  useEffect(() => {
+    progressAnim.setValue(0);
+
+    animationRef.current = Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: STORY_DURATION,
+      useNativeDriver: false,
+    });
+
+    animationRef.current.start(({ finished }) => {
+      if (finished) goTo(activeIndex + 1);
+    });
+
+    return () => animationRef.current?.stop();
+  }, [activeIndex]);
+
+  const handleTap = (e) => {
+    const tapX = e.nativeEvent.locationX;
+    if (tapX < width / 3) {
+      goTo(activeIndex - 1);
     } else {
-      navigation.replace('Auth');
+      goTo(activeIndex + 1);
     }
   };
 
-  const renderSlide = ({ item }) => (
-    <View style={styles.slide}>
-      <ImageBackground
-        source={item.bg}
-        style={StyleSheet.absoluteFill}
-        resizeMode="cover"
-        onError={() => {}} // gracefully handle missing assets
-      />
-      <LinearGradient
-        colors={['rgba(13,11,20,0)', 'rgba(13,11,20,0.55)', 'rgba(13,11,20,0.95)', '#0D0B14']}
-        locations={[0, 0.35, 0.65, 1]}
-        style={StyleSheet.absoluteFill}
-      />
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.wordmark}>Season</Text>
-        </View>
-        <View style={styles.bottom}>
-          <Text style={styles.headline}>{item.headline}</Text>
-          <Button label={item.cta} onPress={handleCta} style={styles.ctaBtn} />
-        </View>
-      </View>
-    </View>
-  );
+  const slide = SLIDES[activeIndex];
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        ref={flatListRef}
-        data={SLIDES}
-        renderItem={renderSlide}
-        keyExtractor={(item) => item.id}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={handleScroll}
-        scrollEventThrottle={16}
-      />
-      {/* Dot indicators */}
-      <View style={styles.dots}>
-        {SLIDES.map((_, i) => (
-          <View key={i} style={[styles.dot, i === activeIndex && styles.dotActive]} />
-        ))}
+    <TouchableWithoutFeedback onPress={handleTap}>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={SLIDE_GRADIENTS[activeIndex]}
+          style={StyleSheet.absoluteFill}
+        />
+
+        <StoryProgressBars
+          total={SLIDES.length}
+          activeIndex={activeIndex}
+          progressAnim={progressAnim}
+        />
+
+        <View style={styles.content}>
+          <Text style={styles.wordmark}>Season</Text>
+          <View style={styles.bottom}>
+            <Text style={styles.headline}>{slide.headline}</Text>
+            <Button
+              label={slide.cta}
+              onPress={() => navigation.replace('Quiz', { questionIndex: 0 })}
+              style={styles.ctaBtn}
+            />
+          </View>
+        </View>
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -105,25 +160,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  slide: {
-    width,
-    height,
-  },
   content: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 60,
+    paddingHorizontal: contentPadding,
     paddingBottom: 48,
     justifyContent: 'space-between',
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    paddingTop: 24,
   },
   wordmark: {
     fontSize: 18,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     letterSpacing: 0.3,
   },
@@ -132,29 +178,12 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontSize: 30,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     lineHeight: 40,
     letterSpacing: -0.3,
   },
   ctaBtn: {
     borderRadius: 14,
-  },
-  dots: {
-    position: 'absolute',
-    bottom: 130,
-    alignSelf: 'center',
-    flexDirection: 'row',
-    gap: 6,
-  },
-  dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  dotActive: {
-    backgroundColor: colors.textPrimary,
-    width: 16,
   },
 });

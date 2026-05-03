@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
 
 export function ProgressBar({ current, total }) {
   const progress = current / total;
@@ -15,13 +14,13 @@ export function ProgressBar({ current, total }) {
 const styles = StyleSheet.create({
   track: {
     height: 2,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255, 255, 255, 0.14)',
     borderRadius: 2,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    backgroundColor: colors.textPrimary,
+    backgroundColor: 'rgba(255, 255, 255, 0.70)',
     borderRadius: 2,
   },
 });

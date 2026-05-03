@@ -7,9 +7,10 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { LinearGradient } from '../components/Gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import { contentPadding } from '../theme/layout';
 
 const WRAP_DATA = {
   seasonName: 'the hideout',
@@ -123,11 +124,12 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: 48,
     paddingBottom: 36,
-    paddingHorizontal: 28,
+    paddingHorizontal: contentPadding,
     alignItems: 'center',
   },
   eyebrow: {
     fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
@@ -135,18 +137,19 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 34,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     letterSpacing: -0.5,
     marginBottom: 6,
   },
   heroDates: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
   },
   bigStats: {
     flexDirection: 'row',
-    marginHorizontal: 20,
+    marginHorizontal: contentPadding,
     marginTop: 4,
     marginBottom: 28,
     backgroundColor: colors.backgroundCard,
@@ -161,12 +164,13 @@ const styles = StyleSheet.create({
   },
   bigStatNumber: {
     fontSize: 40,
-    fontWeight: '200',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     letterSpacing: -1,
   },
   bigStatLabel: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 2,
@@ -177,11 +181,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 12,
   },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: contentPadding,
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -196,10 +201,10 @@ const styles = StyleSheet.create({
   },
   momentText: {
     fontSize: 15,
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     lineHeight: 22,
     fontStyle: 'italic',
-    fontWeight: '300',
   },
   memberCard: {
     flexDirection: 'row',
@@ -214,6 +219,7 @@ const styles = StyleSheet.create({
   },
   rank: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     width: 20,
     textAlign: 'center',
@@ -227,17 +233,19 @@ const styles = StyleSheet.create({
   },
   memberInitials: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
   },
   memberInfo: { flex: 1 },
   memberName: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     marginBottom: 2,
   },
   memberShared: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
   },
   nextSeasonCard: {
@@ -249,12 +257,13 @@ const styles = StyleSheet.create({
   },
   nextSeasonTitle: {
     fontSize: 18,
-    fontWeight: '400',
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     marginBottom: 8,
   },
   nextSeasonBody: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 16,
@@ -270,7 +279,7 @@ const styles = StyleSheet.create({
   },
   nextSeasonBtnText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.background,
   },
   shareBtn: {
@@ -285,6 +294,7 @@ const styles = StyleSheet.create({
   },
   shareBtnText: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
   },
 });

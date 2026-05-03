@@ -9,6 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
+import { contentPadding } from '../theme/layout';
+import { LinearGradient } from '../components/Gradient';
 
 const MOCK_USER = {
   name: 'Your Name',
@@ -57,6 +59,7 @@ function PlatformRow({ platform }) {
 export function ProfileScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient colors={colors.gradientBackground} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -149,7 +152,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
+    paddingHorizontal: contentPadding,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -158,7 +161,7 @@ const styles = StyleSheet.create({
   settingsBtn: { padding: 4 },
   headerTitle: {
     fontSize: 15,
-    fontWeight: '500',
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textPrimary,
   },
   scroll: {
@@ -181,22 +184,23 @@ const styles = StyleSheet.create({
   },
   avatarInitials: {
     fontSize: 22,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textSecondary,
   },
   name: {
     fontSize: 20,
-    fontWeight: '400',
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     marginBottom: 4,
   },
   handle: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
   },
   statsRow: {
     flexDirection: 'row',
-    marginHorizontal: 20,
+    marginHorizontal: contentPadding,
     backgroundColor: colors.backgroundCard,
     borderRadius: 14,
     borderWidth: 1,
@@ -210,12 +214,13 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     textAlign: 'center',
   },
@@ -225,11 +230,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
   },
   section: {
-    paddingHorizontal: 20,
+    paddingHorizontal: contentPadding,
     marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
@@ -256,11 +262,12 @@ const styles = StyleSheet.create({
   },
   seasonName: {
     fontSize: 15,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
-    fontWeight: '400',
   },
   seasonDay: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
   },
   seasonProgressTrack: {
@@ -276,6 +283,7 @@ const styles = StyleSheet.create({
   },
   seasonEnds: {
     fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
   },
   platformRow: {
@@ -292,11 +300,13 @@ const styles = StyleSheet.create({
   },
   platformLabel: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
     marginBottom: 1,
   },
   platformHandle: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
   },
   addPlatformBtn: {
@@ -307,6 +317,7 @@ const styles = StyleSheet.create({
   },
   addPlatformText: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
   },
   actionRow: {
@@ -319,6 +330,7 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 15,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
   },
 });

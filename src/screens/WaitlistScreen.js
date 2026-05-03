@@ -4,57 +4,71 @@ import {
   Text,
   TextInput,
   StyleSheet,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { Button } from '../components/Button';
+import { LinearGradient } from '../components/Gradient';
 
 export function WaitlistScreen() {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = () => {
-    if (email.includes('@')) {
-      setSubmitted(true);
-    }
+    if (email.includes('@')) setSubmitted(true);
   };
 
   return (
     <SafeAreaView style={styles.safe}>
+      <LinearGradient
+        colors={colors.gradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
+        style={styles.flex}
       >
         <View style={styles.content}>
-          <Text style={styles.heading}>Animation</Text>
           {submitted ? (
-            <View style={styles.confirmedBox}>
-              <Text style={styles.confirmedText}>You're on the list.</Text>
-              <Text style={styles.confirmedSub}>We'll email you when your cohort is ready.</Text>
-            </View>
+            <>
+              <Text style={styles.heading}>You're on the list.</Text>
+              <Text style={styles.body}>We'll email you when your cohort is ready.</Text>
+            </>
           ) : (
             <>
+              <Text style={styles.heading}>Animation</Text>
               <Text style={styles.body}>
                 Your season is coming.{'\n'}We'll email you when your cohort is ready.
               </Text>
-              <TextInput
-                style={styles.input}
-                placeholder="your@email.com"
-                placeholderTextColor={colors.textMuted}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-              <Button
-                label="Notify me"
-                onPress={handleSubmit}
-                disabled={!email.includes('@')}
-                style={styles.btn}
-              />
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email address"
+                  placeholderTextColor="#545454"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel="Email address"
+                  onSubmitEditing={handleSubmit}
+                  returnKeyType="send"
+                />
+                <TouchableOpacity
+                  style={[styles.arrowBtn, email.includes('@') && styles.arrowBtnActive]}
+                  onPress={handleSubmit}
+                  disabled={!email.includes('@')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Submit email"
+                >
+                  <Ionicons name="arrow-up" size={16} color="rgba(255,255,255,0.9)" />
+                </TouchableOpacity>
+              </View>
             </>
           )}
         </View>
@@ -68,53 +82,58 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
+  flex: {
     flex: 1,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 34,
+    gap: 32,
   },
   heading: {
-    fontSize: 34,
-    fontWeight: '300',
-    color: colors.textPrimary,
-    letterSpacing: -0.5,
-    marginBottom: 16,
+    fontSize: 48,
+    fontFamily: 'DMSerifDisplay_400Regular',
+    color: '#F7DCB9',
+    lineHeight: 58,
+    textAlign: 'center',
   },
   body: {
-    fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 24,
-    marginBottom: 32,
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textPrimary,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 44,
+    borderRadius: 100,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingLeft: 20,
+    paddingRight: 8,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   input: {
-    height: 50,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.backgroundCard,
-    paddingHorizontal: 16,
-    fontSize: 15,
+    flex: 1,
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
-    marginBottom: 12,
+    height: '100%',
   },
-  btn: {
-    marginTop: 4,
+  arrowBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  confirmedBox: {
-    marginTop: 12,
-  },
-  confirmedText: {
-    fontSize: 22,
-    fontWeight: '300',
-    color: colors.textPrimary,
-    marginBottom: 8,
-  },
-  confirmedSub: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    lineHeight: 22,
+  arrowBtnActive: {
+    backgroundColor: 'rgba(255,255,255,0.22)',
   },
 });

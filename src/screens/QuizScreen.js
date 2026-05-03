@@ -4,14 +4,14 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
-import { ProgressBar } from '../components/ProgressBar';
+import { contentPadding } from '../theme/layout';
+import { LinearGradient } from '../components/Gradient';
 import { RadioOption } from '../components/RadioOption';
 import { Button } from '../components/Button';
 import { quizQuestions } from '../data/quizQuestions';
@@ -46,79 +46,89 @@ export function QuizScreen({ navigation, route }) {
     if (nextIndex < total) {
       navigation.push('Quiz', { questionIndex: nextIndex });
     } else {
-      navigation.replace('Home');
+      navigation.replace('Waitlist');
     }
   };
 
+  const progress = (questionIndex + 1) / total;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
+      <LinearGradient
+        colors={colors.gradientBackground}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
       >
-        {/* Top bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.stepLabel}>
-            {questionIndex + 1}/{total}
-          </Text>
-        </View>
+        <View style={styles.layout}>
 
-        <View style={styles.progressWrap}>
-          <ProgressBar current={questionIndex + 1} total={total} />
-        </View>
+          {/* Top content */}
+          <View>
+            {/* Progress bar + step counter */}
+            <View style={styles.progressRow}>
+              <View style={styles.progressTrack}>
+                <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+              </View>
+              <TouchableOpacity
+                onPress={questionIndex > 0 ? () => navigation.goBack() : undefined}
+                disabled={questionIndex === 0}
+                style={[styles.backBtn, questionIndex === 0 && styles.backBtnHidden]}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                accessible={questionIndex > 0}
+              >
+                <Text style={styles.backIcon}>←</Text>
+              </TouchableOpacity>
+              <Text style={styles.stepLabel}>{questionIndex + 1}/{total}</Text>
+            </View>
 
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Question */}
-          <Text style={styles.question}>{question.question}</Text>
-          {question.subtitle && (
-            <Text style={styles.questionSub}>{question.subtitle}</Text>
-          )}
+            {/* Question */}
+            <Text style={styles.question}>{question.question}</Text>
+            {question.subtitle && (
+              <Text style={styles.questionSub}>{question.subtitle}</Text>
+            )}
 
-          {/* Answer options */}
-          <View style={styles.options}>
-            {isSocialHandles
-              ? question.platforms.map((platform) => (
-                  <View key={platform.id} style={styles.handleRow}>
-                    <View style={styles.handleIcon}>
-                      <Text style={styles.handleIconText}>
-                        {platform.id === 'youtube' ? '▶' : '♪'}
-                      </Text>
+            {/* Options */}
+            <View style={styles.options}>
+              {isSocialHandles
+                ? question.platforms.map((platform) => (
+                    <View key={platform.id} style={styles.handleRow}>
+                      <View style={styles.handleIcon}>
+                        <Text style={styles.handleIconText}>
+                          {platform.id === 'youtube' ? '▶' : '♪'}
+                        </Text>
+                      </View>
+                      <TextInput
+                        style={styles.handleInput}
+                        placeholder={`${platform.label} @${platform.placeholder}`}
+                        placeholderTextColor={colors.textMuted}
+                        value={handles[platform.id] || ''}
+                        onChangeText={(v) =>
+                          setHandles((prev) => ({ ...prev, [platform.id]: v }))
+                        }
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        accessibilityLabel={`${platform.label} username`}
+                      />
                     </View>
-                    <TextInput
-                      style={styles.handleInput}
-                      placeholder={`${platform.label} @${platform.placeholder}`}
-                      placeholderTextColor={colors.textMuted}
-                      value={handles[platform.id] || ''}
-                      onChangeText={(v) =>
-                        setHandles((prev) => ({ ...prev, [platform.id]: v }))
-                      }
-                      autoCapitalize="none"
-                      autoCorrect={false}
+                  ))
+                : question.options.map((opt) => (
+                    <RadioOption
+                      key={opt.id}
+                      label={opt.label}
+                      selected={selected.includes(opt.id)}
+                      onPress={() => handleSelect(opt.id)}
+                      multiSelect={isMultiSelect}
                     />
-                  </View>
-                ))
-              : question.options.map((opt) => (
-                  <RadioOption
-                    key={opt.id}
-                    label={opt.label}
-                    selected={selected.includes(opt.id)}
-                    onPress={() => handleSelect(opt.id)}
-                    multiSelect={isMultiSelect}
-                  />
-                ))}
+                  ))}
+            </View>
           </View>
-        </ScrollView>
 
-        {/* Footer CTA */}
-        <View style={styles.footer}>
+          {/* Button */}
           <Button
             label={questionIndex === total - 1 ? 'Finish' : 'Next'}
             onPress={handleNext}
@@ -138,61 +148,71 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  topBar: {
+  layout: {
+    flex: 1,
+    paddingHorizontal: contentPadding,
+    paddingTop: 48,
+    paddingBottom: 48,
+    justifyContent: 'space-between',
+  },
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 12,
+    gap: 16,
+    marginBottom: 48,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#D9D9D9',
+    borderRadius: 8,
   },
   backBtn: {
     padding: 4,
   },
-  backIcon: {
-    fontSize: 20,
-    color: colors.textSecondary,
+  backBtnHidden: {
+    opacity: 0,
   },
   stepLabel: {
-    fontSize: 12,
-    color: colors.textMuted,
-    letterSpacing: 0.5,
-  },
-  progressWrap: {
-    paddingHorizontal: 20,
-    marginBottom: 28,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textPrimary,
+    letterSpacing: 0,
   },
   question: {
     fontSize: 22,
-    fontWeight: '300',
+    fontFamily: 'PlusJakartaSans_700Bold',
     color: colors.textPrimary,
-    lineHeight: 32,
-    marginBottom: 8,
-    letterSpacing: -0.2,
+    lineHeight: 28,
+    marginBottom: 48,
+    letterSpacing: 0,
   },
   questionSub: {
     fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: 24,
+    marginTop: -36,
   },
   options: {
-    marginTop: 16,
+    gap: 24,
   },
   handleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.backgroundCard,
-    borderRadius: 12,
+    borderRadius: 40,
     borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 10,
-    paddingHorizontal: 14,
-    height: 52,
+    borderColor: 'rgba(148,148,148,0.5)',
+    paddingHorizontal: 24,
+    height: 72,
   },
   handleIcon: {
     width: 28,
@@ -200,18 +220,14 @@ const styles = StyleSheet.create({
   },
   handleIconText: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
   },
   handleInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
     paddingLeft: 8,
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 36,
-    paddingTop: 12,
-    backgroundColor: colors.background,
   },
 });

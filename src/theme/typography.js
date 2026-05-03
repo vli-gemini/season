@@ -1,13 +1,12 @@
 export const typography = {
-  // Font families (system fonts that match the clean, modern feel)
   fontFamily: {
-    regular: undefined, // System default
-    medium: undefined,
-    semibold: undefined,
-    bold: undefined,
+    light: 'PlusJakartaSans_300Light',
+    regular: 'PlusJakartaSans_400Regular',
+    medium: 'PlusJakartaSans_500Medium',
+    semibold: 'PlusJakartaSans_600SemiBold',
+    bold: 'PlusJakartaSans_700Bold',
   },
 
-  // Font sizes
   size: {
     xs: 11,
     sm: 13,
@@ -20,14 +19,12 @@ export const typography = {
     '4xl': 42,
   },
 
-  // Line heights
   lineHeight: {
     tight: 1.15,
     normal: 1.4,
     relaxed: 1.65,
   },
 
-  // Letter spacing
   tracking: {
     tight: -0.5,
     normal: 0,
