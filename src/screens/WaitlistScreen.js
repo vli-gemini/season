@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { LinearGradient } from '../components/Gradient';
 
-export function WaitlistScreen() {
+export function WaitlistScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -38,6 +38,9 @@ export function WaitlistScreen() {
             <>
               <Text style={styles.heading}>You're on the list.</Text>
               <Text style={styles.body}>We'll email you when your cohort is ready.</Text>
+              <TouchableOpacity onPress={() => navigation.replace('Home')}>
+                <Text style={styles.skip}>Skip to app →</Text>
+              </TouchableOpacity>
             </>
           ) : (
             <>
@@ -135,5 +138,10 @@ const styles = StyleSheet.create({
   },
   arrowBtnActive: {
     backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  skip: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
   },
 });

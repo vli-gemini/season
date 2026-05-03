@@ -17,9 +17,11 @@ import { Button } from '../components/Button';
 import { quizQuestions } from '../data/quizQuestions';
 
 export function QuizScreen({ navigation, route }) {
-  const { questionIndex = 0 } = route.params || {};
-  const question = quizQuestions[questionIndex];
-  const total = quizQuestions.length;
+  const { questionIndex = 0, isMoreQuestions = false } = route.params || {};
+  // When re-entering for more matching questions, skip the handle/platform questions
+  const questions = isMoreQuestions ? quizQuestions.slice(0, 6) : quizQuestions;
+  const question = questions[questionIndex];
+  const total = questions.length;
 
   const [selected, setSelected] = useState([]);
   const [handles, setHandles] = useState({});
@@ -44,7 +46,9 @@ export function QuizScreen({ navigation, route }) {
   const handleNext = () => {
     const nextIndex = questionIndex + 1;
     if (nextIndex < total) {
-      navigation.push('Quiz', { questionIndex: nextIndex });
+      navigation.push('Quiz', { questionIndex: nextIndex, isMoreQuestions });
+    } else if (isMoreQuestions) {
+      navigation.navigate('Home');
     } else {
       navigation.replace('Waitlist');
     }
@@ -87,6 +91,9 @@ export function QuizScreen({ navigation, route }) {
             </View>
 
             {/* Question */}
+            {isMoreQuestions && questionIndex === 0 && (
+              <Text style={styles.questionContext}>Helping us find a better match</Text>
+            )}
             <Text style={styles.question}>{question.question}</Text>
             {question.subtitle && (
               <Text style={styles.questionSub}>{question.subtitle}</Text>
@@ -130,7 +137,7 @@ export function QuizScreen({ navigation, route }) {
 
           {/* Button */}
           <Button
-            label={questionIndex === total - 1 ? 'Finish' : 'Next'}
+            label={questionIndex === total - 1 ? (isMoreQuestions ? 'Save & finish' : 'Finish') : 'Next'}
             onPress={handleNext}
             disabled={!canAdvance}
           />
@@ -184,6 +191,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textPrimary,
     letterSpacing: 0,
+  },
+  questionContext: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.accentWarm,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
   question: {
     fontSize: 22,

@@ -8,21 +8,20 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ActionSheetIOS,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { LinearGradient } from '../components/Gradient';
 import { contentPadding } from '../theme/layout';
+import { getSeasonGradient } from '../theme/seasonGradient';
+import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
+import { ALL_MEMBERS, ME } from '../config/members';
+import { Embers } from '../components/Embers';
 
-const CURRENT_DAY = 10;
-const TOTAL_DAYS = 30;
-
-const MEMBERS = [
-  { id: '1', name: 'Sarah Liao', initials: 'SL', color: '#8B7FF5' },
-  { id: '2', name: 'Mark Smith', initials: 'MS', color: '#5ECA8A' },
-  { id: '3', name: 'You', initials: 'YO', color: '#C4A97D', isMe: true },
-];
+const MEMBERS = ALL_MEMBERS;
 
 const INITIAL_MESSAGES = [
   {
@@ -41,7 +40,7 @@ const INITIAL_MESSAGES = [
   },
   {
     id: '3',
-    sender: MEMBERS[2],
+    sender: ME,
     type: 'text',
     text: "What does your content schedule look like right now? Are you posting through it or have you stopped?",
     timestamp: '10:14 AM',
@@ -62,7 +61,7 @@ const INITIAL_MESSAGES = [
   },
   {
     id: '6',
-    sender: MEMBERS[2],
+    sender: ME,
     type: 'text',
     text: "What if you picked the least precious draft the one you care about least and just shipped it? Not everything has to matter. Sometimes done is enough…",
     timestamp: '10:20 AM',
@@ -142,7 +141,42 @@ function Message({ message, prevSender }) {
 export function HomeScreen({ navigation }) {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
+  const [day, setDay] = useState(CURRENT_DAY);
   const flatListRef = useRef(null);
+
+  const prevDay = () => setDay(d => Math.max(1, d - 1));
+  const nextDay = () => setDay(d => Math.min(TOTAL_DAYS, d + 1));
+
+  const handleAttach = () => {
+    const options = ['Share a link', 'Share a photo', 'Record a video', 'Cancel'];
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options, cancelButtonIndex: 3 },
+        (index) => {
+          if (index < 3) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Date.now().toString(),
+                sender: ME,
+                type: 'system',
+                text: `📎 ${options[index]} — coming soon`,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              },
+            ]);
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+          }
+        }
+      );
+    } else {
+      Alert.alert('Share your work', 'What would you like to share?', [
+        { text: 'Share a link', onPress: () => {} },
+        { text: 'Share a photo', onPress: () => {} },
+        { text: 'Record a video', onPress: () => {} },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
 
   const sendMessage = () => {
     const text = input.trim();
@@ -151,7 +185,7 @@ export function HomeScreen({ navigation }) {
       ...prev,
       {
         id: Date.now().toString(),
-        sender: MEMBERS[2],
+        sender: ME,
         type: 'text',
         text,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -163,35 +197,77 @@ export function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient colors={colors.gradientBackground} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={getSeasonGradient(day, TOTAL_DAYS)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Embers currentDay={day} />
 
       {/* Header */}
       <View style={styles.header}>
         {/* Left: day counter */}
-        <Text style={styles.dayLabel}>
-          Day <Text style={styles.dayLabelBold}>{CURRENT_DAY}</Text>
-          <Text style={styles.dayLabelTotal}>/{TOTAL_DAYS}</Text>
-        </Text>
+        <View style={styles.dayControl}>
+          <TouchableOpacity onPress={prevDay} style={styles.dayArrow}>
+            <Ionicons name="chevron-back" size={14} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={styles.dayLabel}>
+            Day <Text style={styles.dayLabelBold}>{day}</Text>
+            <Text style={styles.dayLabelTotal}>/{TOTAL_DAYS}</Text>
+          </Text>
+          <TouchableOpacity onPress={nextDay} style={styles.dayArrow}>
+            <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+          </TouchableOpacity>
+        </View>
 
         {/* Center: group avatar + name */}
-        <View style={styles.headerCenter}>
+        <TouchableOpacity
+          style={styles.headerCenter}
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('GroupSettings')}
+        >
           <GroupAvatar size={50} />
           <Text style={styles.groupName}>the hideout</Text>
-        </View>
+        </TouchableOpacity>
 
         {/* Right: action buttons */}
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.headerIconBtn}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('DMList')}
+          >
             <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerAvatarBtn}
             onPress={() => navigation.navigate('Profile')}
           >
-            <Avatar member={MEMBERS[2]} size={34} />
+            <Avatar member={ME} size={34} />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Season countdown banner — visible in the last 7 days */}
+      {(TOTAL_DAYS - day) <= 7 && (
+        <TouchableOpacity
+          style={[
+            styles.countdownBanner,
+            (TOTAL_DAYS - day) <= 0 && styles.countdownBannerEnded,
+          ]}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('SeasonEnding', { day })}
+        >
+          <Ionicons
+            name={(TOTAL_DAYS - day) <= 0 ? 'ribbon-outline' : 'time-outline'}
+            size={14}
+            color={colors.accentWarm}
+          />
+          <Text style={styles.countdownText}>
+            {(TOTAL_DAYS - day) <= 0
+              ? 'Your season has ended — see what\'s next'
+              : (TOTAL_DAYS - day) === 1
+              ? 'Last day of the season — choose who you continue with'
+              : `Season ends in ${TOTAL_DAYS - day} days — choose who you continue with`}
+          </Text>
+          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+        </TouchableOpacity>
+      )}
 
       {/* Messages */}
       <KeyboardAvoidingView
@@ -216,7 +292,7 @@ export function HomeScreen({ navigation }) {
         {/* Input bar */}
         <View style={styles.inputBarWrap}>
           <View style={styles.inputBar}>
-            <TouchableOpacity style={styles.plusBtn}>
+            <TouchableOpacity style={styles.plusBtn} onPress={handleAttach}>
               <Ionicons name="add" size={22} color={colors.textSecondary} />
             </TouchableOpacity>
             <TextInput
@@ -251,6 +327,32 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+
+  // Countdown banner
+  countdownBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: contentPadding,
+    marginBottom: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(196,169,125,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(196,169,125,0.2)',
+  },
+  countdownBannerEnded: {
+    backgroundColor: 'rgba(155,143,255,0.1)',
+    borderColor: 'rgba(155,143,255,0.2)',
+  },
+  countdownText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 17,
+  },
   flex: { flex: 1 },
 
   // Header
@@ -262,11 +364,18 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 8,
   },
+  dayControl: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  dayArrow: {
+    padding: 4,
+  },
   dayLabel: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.accentWarm,
-    width: 80,
   },
   dayLabelBold: {
     fontSize: 15,

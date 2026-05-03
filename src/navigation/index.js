@@ -8,44 +8,57 @@ import { AuthScreen } from '../screens/AuthScreen';
 import { WaitlistScreen } from '../screens/WaitlistScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { HomeScreen } from '../screens/HomeScreen';
+import { DMListScreen } from '../screens/DMListScreen';
 import { DMScreen } from '../screens/DMScreen';
+import { MemberProfileScreen } from '../screens/MemberProfileScreen';
+import { GroupSettingsScreen } from '../screens/GroupSettingsScreen';
+import { SeasonEndingScreen } from '../screens/SeasonEndingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SeasonWrapScreen } from '../screens/SeasonWrapScreen';
 
 const Stack = createNativeStackNavigator();
 
+const linking = {
+  prefixes: ['http://localhost:8081'],
+  config: {
+    screens: {
+      Splash:      '/',
+      Onboarding:  '/onboarding',
+      Auth:        '/auth',
+      Waitlist:    '/waitlist',
+      Quiz:        '/quiz',
+      Home:        '/home',
+      GroupSettings: '/group',
+      DMList:      '/dms',
+      DM:          '/dm',
+      MemberProfile: '/member',
+      Profile:     '/profile',
+      SeasonWrap:   '/season-wrap',
+      SeasonEnding: '/season-ending',
+    },
+  },
+};
+
 export function Navigation() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         initialRouteName="Splash"
         screenOptions={{ headerShown: false, animation: 'fade' }}
       >
-        <Stack.Screen name="Splash" component={SplashScreen} />
-        <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen name="Waitlist" component={WaitlistScreen} />
-        <Stack.Screen
-          name="Quiz"
-          component={QuizScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen
-          name="DM"
-          component={DMScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ animation: 'slide_from_right' }}
-        />
-        <Stack.Screen
-          name="SeasonWrap"
-          component={SeasonWrapScreen}
-          options={{ animation: 'slide_from_bottom' }}
-        />
+        <Stack.Screen name="Splash"      component={SplashScreen} />
+        <Stack.Screen name="Onboarding"  component={OnboardingScreen} />
+        <Stack.Screen name="Auth"        component={AuthScreen} />
+        <Stack.Screen name="Waitlist"    component={WaitlistScreen} />
+        <Stack.Screen name="Quiz"        component={QuizScreen}       options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Home"        component={HomeScreen} />
+        <Stack.Screen name="GroupSettings" component={GroupSettingsScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="DMList"      component={DMListScreen}     options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="DM"          component={DMScreen}         options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="MemberProfile" component={MemberProfileScreen} options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="Profile"     component={ProfileScreen}    options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="SeasonWrap"   component={SeasonWrapScreen}   options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="SeasonEnding" component={SeasonEndingScreen}  options={{ animation: 'slide_from_bottom' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

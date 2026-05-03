@@ -14,36 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { LinearGradient } from '../components/Gradient';
-
-const OTHER_USER = { id: '1', name: 'Sarah Liao', initials: 'SL', color: '#8B7FF5' };
-const ME = { id: 'me', name: 'You', initials: 'YO', color: '#C4A97D', isMe: true };
-
-const INITIAL_MESSAGES = [
-  {
-    id: '1',
-    sender: OTHER_USER,
-    text: 'Hey! I really liked what you made yesterday. How long did that take you?',
-    timestamp: '2:14 PM',
-  },
-  {
-    id: '2',
-    sender: ME,
-    text: 'Thank you! Probably about 3 hours start to finish. The editing took forever.',
-    timestamp: '2:20 PM',
-  },
-  {
-    id: '3',
-    sender: OTHER_USER,
-    text: 'I felt that. I\'ve been trying to get my editing time down. What do you use?',
-    timestamp: '2:21 PM',
-  },
-  {
-    id: '4',
-    sender: ME,
-    text: 'Mostly CapCut for the quick stuff, Premiere when it needs to be polished.',
-    timestamp: '2:23 PM',
-  },
-];
+import { getSeasonGradient } from '../theme/seasonGradient';
+import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
+import { ME, DM_SEEDS } from '../config/members';
+import { Embers } from '../components/Embers';
 
 function Avatar({ user, size = 30 }) {
   return (
@@ -61,7 +35,14 @@ function Avatar({ user, size = 30 }) {
 }
 
 export function DMScreen({ navigation, route }) {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const otherUser = route?.params?.user ?? { id: '1', name: 'Sarah Liao', initials: 'SL', color: '#8B7FF5' };
+  const seed = DM_SEEDS[otherUser.id] ?? [];
+  const hydratedSeed = seed.map((m) => ({
+    ...m,
+    sender: m.senderId === 'me' ? ME : otherUser,
+  }));
+
+  const [messages, setMessages] = useState(hydratedSeed);
   const [input, setInput] = useState('');
 
   const send = () => {
@@ -83,7 +64,6 @@ export function DMScreen({ navigation, route }) {
     const isMe = item.sender.isMe;
     return (
       <View style={[styles.msgRow, isMe && styles.msgRowMe]}>
-        {!isMe && <Avatar user={item.sender} size={28} />}
         <View style={styles.bubbleWrap}>
           <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
             <Text style={styles.bubbleText}>{item.text}</Text>
@@ -96,16 +76,22 @@ export function DMScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient colors={colors.gradientBackground} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Embers />
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => navigation.navigate('DMList')} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Avatar user={OTHER_USER} size={30} />
-          <Text style={styles.headerName}>{OTHER_USER.name}</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.headerCenter}
+          onPress={() => navigation.navigate('MemberProfile', { user: otherUser })}
+          activeOpacity={0.7}
+        >
+          <Avatar user={otherUser} size={30} />
+          <Text style={styles.headerName}>{otherUser.name}</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+        </TouchableOpacity>
         <View style={{ width: 30 }} />
       </View>
 

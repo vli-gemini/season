@@ -1,131 +1,683 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from '../components/Gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
+import { getSeasonGradient } from '../theme/seasonGradient';
+import { TOTAL_DAYS } from '../config/season';
+import { GROUP_MEMBERS } from '../config/members';
+import { Embers } from '../components/Embers';
+
+const { width: SW } = Dimensions.get('window');
+
+const MEMBER_MADE_COUNTS = { '1': 26, '2': 24, '3': 19, '4': 14, '5': 21, '6': 17, '7': 23 };
 
 const WRAP_DATA = {
   seasonName: 'the hideout',
+  seasonNumber: 1,
   startDate: 'Apr 1',
   endDate: 'Apr 30',
+  nextSeasonStart: 'May 15',
   madeCount: 22,
   daysShowed: 28,
   totalDays: 30,
+  bestStreak: 12,
   topMoment: 'Day 14 — you posted your most personal video yet.',
-  members: [
-    { id: '1', name: 'Sarah Liao', initials: 'SL', color: '#8B7FF5', sharedCount: 26 },
-    { id: '2', name: 'Mark Smith', initials: 'MS', color: '#5ECA8A', sharedCount: 24 },
-    { id: '3', name: 'Jordan Lee', initials: 'JL', color: '#C4A97D', sharedCount: 19 },
-  ],
-  nextSeasonOpen: true,
+  members: GROUP_MEMBERS
+    .map((m) => ({ ...m, sharedCount: MEMBER_MADE_COUNTS[m.id] ?? 0 }))
+    .sort((a, b) => b.sharedCount - a.sharedCount),
 };
 
-function MemberCard({ member, rank }) {
+const GROUP_TOTAL = Object.values(MEMBER_MADE_COUNTS).reduce((s, n) => s + n, 0) + WRAP_DATA.madeCount;
+const ATTENDANCE_PCT = Math.round((WRAP_DATA.daysShowed / WRAP_DATA.totalDays) * 100);
+const MY_RANK = WRAP_DATA.members.filter((m) => m.sharedCount > WRAP_DATA.madeCount).length + 1;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared primitives
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PageDots({ total, current }) {
   return (
-    <View style={styles.memberCard}>
-      <Text style={styles.rank}>#{rank}</Text>
-      <View style={[styles.memberAvatar, { backgroundColor: member.color + '33' }]}>
-        <Text style={styles.memberInitials}>{member.initials}</Text>
-      </View>
-      <View style={styles.memberInfo}>
-        <Text style={styles.memberName}>{member.name}</Text>
-        <Text style={styles.memberShared}>{member.sharedCount} things made</Text>
-      </View>
+    <View style={dotStyles.row}>
+      {Array.from({ length: total }).map((_, i) => (
+        <View
+          key={i}
+          style={[
+            dotStyles.dot,
+            i === current && dotStyles.dotActive,
+            i < current && dotStyles.dotDone,
+          ]}
+        />
+      ))}
     </View>
   );
 }
 
-export function SeasonWrapScreen({ navigation }) {
+const dotStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
+  dotActive: { width: 18, backgroundColor: colors.accentWarm },
+  dotDone: { backgroundColor: 'rgba(255,255,255,0.4)' },
+});
+
+function MemberRow({ member, rank, highlight }) {
+  return (
+    <View style={[memberStyles.row, highlight && memberStyles.rowHighlight]}>
+      <Text style={memberStyles.rank}>#{rank}</Text>
+      <View style={[memberStyles.avatar, { backgroundColor: member.color + '33' }]}>
+        <Text style={memberStyles.initials}>{member.initials}</Text>
+      </View>
+      <View style={memberStyles.info}>
+        <Text style={memberStyles.name}>{member.name.split(' ')[0]}</Text>
+        <Text style={memberStyles.count}>{member.sharedCount} things made</Text>
+      </View>
+      <View style={[memberStyles.bar, { width: `${Math.round((member.sharedCount / 30) * 100)}%`, backgroundColor: member.color + '66' }]} />
+    </View>
+  );
+}
+
+const memberStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  rowHighlight: {
+    borderColor: colors.accentWarm + '55',
+    backgroundColor: colors.accentWarm + '0D',
+  },
+  bar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 12,
+    opacity: 0.25,
+  },
+  rank: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    width: 22,
+    textAlign: 'center',
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+  },
+  info: { flex: 1 },
+  name: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textPrimary,
+    marginBottom: 1,
+  },
+  count: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+  },
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Continued path — 5 pages
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PageClose({ onNext }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <LinearGradient
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
+        style={styles.heroBlock}
+      >
+        <Text style={styles.eyebrow}>Season Complete</Text>
+        <Text style={styles.heroName}>{WRAP_DATA.seasonName}</Text>
+        <Text style={styles.heroDates}>{WRAP_DATA.startDate} — {WRAP_DATA.endDate}</Text>
+      </LinearGradient>
+
+      <View style={styles.section}>
+        <View style={styles.closeCard}>
+          <Ionicons name="ribbon-outline" size={28} color={colors.accentWarm} style={{ marginBottom: 16 }} />
+          <Text style={styles.closeHeadline}>You made it.</Text>
+          <Text style={styles.closeBody}>
+            Thirty days. Some of them were hard. Some of them surprised you. But you stayed in the room — and that's the whole point.
+          </Text>
+          <Text style={styles.closeBody2}>
+            Here's what this season looked like.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.quickStats}>
+        <View style={styles.quickStat}>
+          <Text style={styles.quickStatNum}>{WRAP_DATA.madeCount}</Text>
+          <Text style={styles.quickStatLabel}>things{'\n'}made</Text>
+        </View>
+        <View style={styles.quickStatDivider} />
+        <View style={styles.quickStat}>
+          <Text style={styles.quickStatNum}>{WRAP_DATA.daysShowed}</Text>
+          <Text style={styles.quickStatLabel}>days you{'\n'}showed up</Text>
+        </View>
+        <View style={styles.quickStatDivider} />
+        <View style={styles.quickStat}>
+          <Text style={styles.quickStatNum}>{WRAP_DATA.bestStreak}</Text>
+          <Text style={styles.quickStatLabel}>day best{'\n'}streak</Text>
+        </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
+          <Text style={styles.primaryBtnText}>See your wrap</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+function PageNumbers({ onNext }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <View style={styles.pageHero}>
+        <Text style={styles.eyebrow}>Your Season</Text>
+        <Text style={styles.pageTitle}>By the numbers</Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.bigStatCard}>
+          <Text style={styles.bigStatNum}>{WRAP_DATA.madeCount}</Text>
+          <Text style={styles.bigStatLabel}>things made this season</Text>
+          <View style={styles.bigStatBar}>
+            <View style={[styles.bigStatFill, { width: `${Math.round((WRAP_DATA.madeCount / 30) * 100)}%` }]} />
+          </View>
+          <Text style={styles.bigStatSub}>out of 30 days</Text>
+        </View>
+      </View>
+
+      <View style={[styles.section, { gap: 10 }]}>
+        <View style={styles.statRow}>
+          <View style={styles.statRowCard}>
+            <Text style={styles.statRowNum}>{WRAP_DATA.daysShowed}</Text>
+            <Text style={styles.statRowLabel}>days showed up</Text>
+          </View>
+          <View style={styles.statRowCard}>
+            <Text style={styles.statRowNum}>{ATTENDANCE_PCT}%</Text>
+            <Text style={styles.statRowLabel}>attendance</Text>
+          </View>
+        </View>
+        <View style={styles.statRow}>
+          <View style={styles.statRowCard}>
+            <Text style={styles.statRowNum}>{WRAP_DATA.bestStreak}</Text>
+            <Text style={styles.statRowLabel}>day best streak</Text>
+          </View>
+          <View style={[styles.statRowCard, styles.statRowCardAccent]}>
+            <Text style={[styles.statRowNum, { color: colors.accentWarm }]}>#{MY_RANK}</Text>
+            <Text style={styles.statRowLabel}>in your group</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.insightCard}>
+          <Ionicons name="trending-up-outline" size={16} color={colors.accentWarm} />
+          <Text style={styles.insightText}>
+            You showed up <Text style={styles.insightEm}>{ATTENDANCE_PCT}% of this season</Text> — more than most people ever do.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
+          <Text style={styles.primaryBtnText}>Your people</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+function PagePeople({ onNext, keptMemberIds = [] }) {
+  const keptSet = new Set(keptMemberIds);
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <View style={styles.pageHero}>
+        <Text style={styles.eyebrow}>The Group</Text>
+        <Text style={styles.pageTitle}>Your people</Text>
+        <Text style={styles.pageSubtitle}>
+          Together, your group made {GROUP_TOTAL} things this season.
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        {WRAP_DATA.members.map((m, i) => (
+          <MemberRow key={m.id} member={m} rank={i + 1} highlight={keptSet.has(m.id)} />
+        ))}
+      </View>
+
+      {keptMemberIds.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.keptCard}>
+            <Ionicons name="heart-outline" size={15} color={colors.accentWarm} />
+            <Text style={styles.keptText}>
+              You asked to continue with{' '}
+              <Text style={styles.keptNames}>
+                {WRAP_DATA.members
+                  .filter((m) => keptSet.has(m.id))
+                  .map((m) => m.name.split(' ')[0])
+                  .join(', ')}
+              </Text>
+              . We'll do our best.
+            </Text>
+          </View>
+        </View>
+      )}
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity style={styles.primaryBtn} onNext={onNext} onPress={onNext}>
+          <Text style={styles.primaryBtnText}>Your moment</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+function PageMoment({ onNext }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <View style={styles.pageHero}>
+        <Text style={styles.eyebrow}>A Moment</Text>
+        <Text style={styles.pageTitle}>Worth keeping</Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.momentCard}>
+          <Ionicons name="star-outline" size={18} color={colors.accent} style={{ marginBottom: 12 }} />
+          <Text style={styles.momentQuote}>"{WRAP_DATA.topMoment}"</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.reflectionCard}>
+          <Text style={styles.reflectionTitle}>What changed</Text>
+          <Text style={styles.reflectionBody}>
+            A season isn't just about output. Something shifted for you in those 30 days — in how you work, what you make, or what you're willing to share.
+          </Text>
+          <Text style={styles.reflectionBody} style={{ marginTop: 12, ...styles.reflectionBody }}>
+            That's worth more than any number.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.achieveRow}>
+          <View style={styles.achieveBadge}>
+            <Ionicons name="trophy-outline" size={20} color={colors.accentWarm} />
+            <Text style={styles.achieveLabel}>Season{'\n'}Complete</Text>
+          </View>
+          <View style={styles.achieveBadge}>
+            <Ionicons name="flame-outline" size={20} color="#FF8C40" />
+            <Text style={styles.achieveLabel}>{WRAP_DATA.bestStreak}-Day{'\n'}Streak</Text>
+          </View>
+          <View style={styles.achieveBadge}>
+            <Ionicons name="people-outline" size={20} color={colors.accent} />
+            <Text style={styles.achieveLabel}>Group{'\n'}Finisher</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
+          <Text style={styles.primaryBtnText}>What's next</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+function PageNext({ navigation, freshStart, keptMemberIds = [] }) {
+  const keptSet = new Set(keptMemberIds);
+  const keptMembers = WRAP_DATA.members.filter((m) => keptSet.has(m.id));
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <View style={styles.pageHero}>
+        <Text style={styles.eyebrow}>Season {WRAP_DATA.seasonNumber + 1}</Text>
+        <Text style={styles.pageTitle}>A new season{'\n'}is coming.</Text>
+        <Text style={styles.nextDate}>{WRAP_DATA.nextSeasonStart}</Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.nextCard}>
+          <LinearGradient
+            colors={['rgba(196,169,125,0.12)', 'rgba(196,169,125,0.04)']}
+            style={styles.nextCardGradient}
+          >
+            {freshStart ? (
+              <>
+                <Ionicons name="shuffle-outline" size={22} color={colors.accentWarm} style={{ marginBottom: 12 }} />
+                <Text style={styles.nextCardTitle}>Fresh slate. New faces.</Text>
+                <Text style={styles.nextCardBody}>
+                  You asked for a completely new group. We're finding people who match where you are right now — not where you were.
+                </Text>
+              </>
+            ) : keptMembers.length > 0 ? (
+              <>
+                <View style={styles.nextAvatarRow}>
+                  {keptMembers.map((m) => (
+                    <View key={m.id} style={[styles.nextAvatar, { backgroundColor: m.color + '33', borderColor: m.color + '55' }]}>
+                      <Text style={styles.nextAvatarText}>{m.initials}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.nextCardTitle} style={{ marginTop: 14, ...styles.nextCardTitle }}>We'll try to keep you together.</Text>
+                <Text style={styles.nextCardBody}>
+                  We noted who you want to continue with. No guarantees — but we'll do everything we can to build the right room.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name="compass-outline" size={22} color={colors.accentWarm} style={{ marginBottom: 12 }} />
+                <Text style={styles.nextCardTitle}>A new group is coming.</Text>
+                <Text style={styles.nextCardBody}>
+                  We'll find the right people for where you are now. New season, same commitment.
+                </Text>
+              </>
+            )}
+          </LinearGradient>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.hopeCard}>
+          <Text style={styles.hopeText}>
+            "The point was never to be ready. The point was to show up anyway."
+          </Text>
+          <Text style={styles.hopeSub}>See you in Season {WRAP_DATA.seasonNumber + 1}.</Text>
+        </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity
+          style={styles.primaryBtn}
+          onPress={() => navigation.navigate('Home')}
+        >
+          <Ionicons name="checkmark" size={15} color={colors.background} />
+          <Text style={styles.primaryBtnText}>I'm ready</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => navigation.navigate('Quiz', { questionIndex: 0, isMoreQuestions: true })}
+        >
+          <Text style={styles.secondaryBtnText}>Answer more matching questions</Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.ghostBtn} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.ghostBtnText}>Back to home</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Non-continued path — 2 pages
+// ─────────────────────────────────────────────────────────────────────────────
+
+function PageSeason({ onNext }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <LinearGradient
+        colors={['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.5)']}
+        style={styles.heroBlock}
+      >
+        <Text style={styles.eyebrow}>Season Complete</Text>
+        <Text style={styles.heroName}>{WRAP_DATA.seasonName}</Text>
+        <Text style={styles.heroDates}>{WRAP_DATA.startDate} — {WRAP_DATA.endDate}</Text>
+      </LinearGradient>
+
+      <View style={styles.section}>
+        <View style={styles.closeCard}>
+          <Ionicons name="moon-outline" size={24} color={colors.textMuted} style={{ marginBottom: 14 }} />
+          <Text style={styles.closeHeadline} style={{ ...styles.closeHeadline, color: colors.textSecondary }}>This season is over.</Text>
+          <Text style={styles.closeBody}>
+            You didn't make it to the next round — that's okay. Life moves. Timing is everything. Season {WRAP_DATA.seasonNumber} is done, but here's what happened while it ran.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>The group made</Text>
+        <View style={styles.groupStatCard}>
+          <Text style={styles.groupStatNum}>{GROUP_TOTAL}</Text>
+          <Text style={styles.groupStatLabel}>things together across {WRAP_DATA.totalDays} days</Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>The people</Text>
+        {WRAP_DATA.members.slice(0, 4).map((m, i) => (
+          <MemberRow key={m.id} member={m} rank={i + 1} />
+        ))}
+        <Text style={styles.moreMembers}>+ {WRAP_DATA.members.length - 4} more</Text>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
+          <Text style={styles.primaryBtnText}>See what's next</Text>
+          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+function PageRejoin({ navigation }) {
+  return (
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.pageScroll}>
+      <View style={styles.pageHero}>
+        <Text style={styles.eyebrow}>Season {WRAP_DATA.seasonNumber + 1}</Text>
+        <Text style={styles.pageTitle}>The door is open.</Text>
+        <Text style={styles.pageSubtitle}>
+          Whenever you're ready, there's a group for you.
+        </Text>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.rejoinCard}>
+          <LinearGradient
+            colors={['rgba(168,155,255,0.10)', 'rgba(168,155,255,0.03)']}
+            style={styles.rejoinCardGradient}
+          >
+            <Text style={styles.rejoinTitle}>Season {WRAP_DATA.seasonNumber + 1} opens {WRAP_DATA.nextSeasonStart}.</Text>
+            <Text style={styles.rejoinBody}>
+              A new group. A fresh 30 days. The same simple ask — just show up and make something.
+            </Text>
+
+            <View style={styles.rejoinFeatureList}>
+              {[
+                ['people-outline', 'A matched group of 8 creatives'],
+                ['calendar-outline', '30 days, one thing at a time'],
+                ['chatbubble-ellipses-outline', 'A private group to share work'],
+                ['sparkles-outline', 'Better matching based on who you are now'],
+              ].map(([icon, label]) => (
+                <View key={label} style={styles.rejoinFeatureRow}>
+                  <Ionicons name={icon} size={15} color={colors.accent} />
+                  <Text style={styles.rejoinFeatureLabel}>{label}</Text>
+                </View>
+              ))}
+            </View>
+          </LinearGradient>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.hopeCard}>
+          <Text style={styles.hopeText}>
+            "There's no perfect time to start. There's only the next season."
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.ctaWrap}>
+        <TouchableOpacity
+          style={[styles.primaryBtn, styles.primaryBtnAccent]}
+          onPress={() => navigation.navigate('Quiz', { questionIndex: 0 })}
+        >
+          <Ionicons name="arrow-forward-circle-outline" size={18} color={colors.background} />
+          <Text style={styles.primaryBtnText}>Join Season {WRAP_DATA.seasonNumber + 1}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.secondaryBtn}
+          onPress={() => navigation.navigate('Waitlist')}
+        >
+          <Text style={styles.secondaryBtnText}>Remind me when it opens</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.ghostBtn} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.ghostBtnText}>Not right now</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Root screen
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function SeasonWrapScreen({ navigation, route }) {
+  const continued = route?.params?.continued ?? true;
+  const freshStart = route?.params?.freshStart ?? false;
+  const keptMemberIds = route?.params?.keptMemberIds ?? [];
+
+  const totalPages = continued ? 5 : 2;
+  const [page, setPage] = useState(0);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const changePage = (next) => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, { toValue: 0, duration: 120, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 180, useNativeDriver: true }),
+    ]).start();
+    setPage(next);
+  };
+
+  const goNext = () => changePage(Math.min(page + 1, totalPages - 1));
+  const goBack = () => {
+    if (page > 0) return changePage(page - 1);
+    navigation.goBack();
+  };
+
+  const showBack = page > 0;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        {/* Hero */}
-        <LinearGradient
-          colors={['#1A1729', '#0D0B14']}
-          style={styles.hero}
-        >
-          <Text style={styles.eyebrow}>Season Complete</Text>
-          <Text style={styles.heroTitle}>{WRAP_DATA.seasonName}</Text>
-          <Text style={styles.heroDates}>
-            {WRAP_DATA.startDate} — {WRAP_DATA.endDate}
-          </Text>
-        </LinearGradient>
+      <LinearGradient
+        colors={getSeasonGradient(TOTAL_DAYS, TOTAL_DAYS)}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <Embers />
 
-        {/* Big stats */}
-        <View style={styles.bigStats}>
-          <View style={styles.bigStatItem}>
-            <Text style={styles.bigStatNumber}>{WRAP_DATA.madeCount}</Text>
-            <Text style={styles.bigStatLabel}>things made</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.bigStatItem}>
-            <Text style={styles.bigStatNumber}>{WRAP_DATA.daysShowed}</Text>
-            <Text style={styles.bigStatLabel}>days you showed up</Text>
-          </View>
-        </View>
-
-        {/* Top moment */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your moment</Text>
-          <View style={styles.momentCard}>
-            <Ionicons name="star-outline" size={18} color={colors.accent} style={{ marginBottom: 8 }} />
-            <Text style={styles.momentText}>{WRAP_DATA.topMoment}</Text>
-          </View>
-        </View>
-
-        {/* Season members */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your people</Text>
-          {WRAP_DATA.members.map((m, i) => (
-            <MemberCard key={m.id} member={m} rank={i + 1} />
-          ))}
-        </View>
-
-        {/* New questions teaser */}
-        <View style={styles.section}>
-          <View style={styles.nextSeasonCard}>
-            <Text style={styles.nextSeasonTitle}>A better match is coming.</Text>
-            <Text style={styles.nextSeasonBody}>
-              Based on this season, we have 3 new questions to help us find your next group.
-            </Text>
-            <TouchableOpacity
-              style={styles.nextSeasonBtn}
-              onPress={() => navigation.navigate('Quiz', { questionIndex: 0 })}
-            >
-              <Text style={styles.nextSeasonBtnText}>Answer them</Text>
-              <Ionicons name="arrow-forward" size={14} color={colors.background} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Share */}
-        <View style={[styles.section, { paddingBottom: 40 }]}>
-          <TouchableOpacity style={styles.shareBtn}>
-            <Ionicons name="share-outline" size={16} color={colors.textSecondary} />
-            <Text style={styles.shareBtnText}>Share your season</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        {showBack ? (
+          <TouchableOpacity onPress={goBack} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
-        </View>
-      </ScrollView>
+        ) : (
+          <View style={styles.backBtn} />
+        )}
+        <PageDots total={totalPages} current={page} />
+        <View style={styles.backBtn} />
+      </View>
+
+      {/* Pages */}
+      <Animated.View style={[styles.flex, { opacity: fadeAnim }]}>
+        {continued ? (
+          <>
+            {page === 0 && <PageClose onNext={goNext} />}
+            {page === 1 && <PageNumbers onNext={goNext} />}
+            {page === 2 && <PagePeople onNext={goNext} keptMemberIds={keptMemberIds} />}
+            {page === 3 && <PageMoment onNext={goNext} />}
+            {page === 4 && (
+              <PageNext
+                navigation={navigation}
+                freshStart={freshStart}
+                keptMemberIds={keptMemberIds}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            {page === 0 && <PageSeason onNext={goNext} />}
+            {page === 1 && <PageRejoin navigation={navigation} />}
+          </>
+        )}
+      </Animated.View>
     </SafeAreaView>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  scroll: { paddingBottom: 20 },
-  hero: {
-    paddingTop: 48,
-    paddingBottom: 36,
+  flex: { flex: 1 },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: contentPadding,
+    paddingVertical: 14,
+  },
+  backBtn: { width: 38, padding: 4 },
+
+  pageScroll: { paddingBottom: 40 },
+
+  // ── Hero variants ──────────────────────────────
+  heroBlock: {
+    paddingTop: 40,
+    paddingBottom: 32,
     paddingHorizontal: contentPadding,
     alignItems: 'center',
+    marginBottom: 8,
   },
   eyebrow: {
     fontSize: 11,
@@ -133,168 +685,484 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  heroTitle: {
-    fontSize: 34,
+  heroName: {
+    fontSize: 38,
     fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
     letterSpacing: -0.5,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   heroDates: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
   },
-  bigStats: {
-    flexDirection: 'row',
-    marginHorizontal: contentPadding,
-    marginTop: 4,
-    marginBottom: 28,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 20,
-  },
-  bigStatItem: {
-    flex: 1,
+
+  pageHero: {
     alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 28,
+    paddingHorizontal: contentPadding,
   },
-  bigStatNumber: {
-    fontSize: 40,
+  pageTitle: {
+    fontSize: 30,
     fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
-    letterSpacing: -1,
-  },
-  bigStatLabel: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    letterSpacing: -0.4,
     textAlign: 'center',
-    marginTop: 2,
+    marginBottom: 8,
   },
-  statDivider: {
-    width: 1,
-    backgroundColor: colors.border,
-    marginHorizontal: 12,
+  pageSubtitle: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 21,
+    paddingHorizontal: 8,
   },
+  nextDate: {
+    marginTop: 6,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.accentWarm,
+    letterSpacing: 0.5,
+  },
+
+  // ── Section ──────────────────────────────────
   section: {
     paddingHorizontal: contentPadding,
-    marginBottom: 24,
+    marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 12,
+  sectionLabel: {
+    fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 10,
   },
-  momentCard: {
+
+  // ── Page 0: Close ────────────────────────────
+  closeCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    padding: 24,
+    alignItems: 'center',
+  },
+  closeHeadline: {
+    fontSize: 22,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  closeBody: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 24,
+    textAlign: 'center',
+  },
+  closeBody2: {
+    marginTop: 14,
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+
+  quickStats: {
+    flexDirection: 'row',
+    marginHorizontal: contentPadding,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: 20,
+    marginBottom: 28,
+  },
+  quickStat: { flex: 1, alignItems: 'center' },
+  quickStatNum: {
+    fontSize: 34,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    letterSpacing: -1,
+    marginBottom: 4,
+  },
+  quickStatLabel: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  quickStatDivider: {
+    width: 1,
+    backgroundColor: colors.border,
+  },
+
+  // ── Page 1: Numbers ──────────────────────────
+  bigStatCard: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    alignItems: 'center',
+  },
+  bigStatNum: {
+    fontSize: 72,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    letterSpacing: -3,
+    lineHeight: 78,
+  },
+  bigStatLabel: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    marginBottom: 16,
+    marginTop: 4,
+  },
+  bigStatBar: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 2,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  bigStatFill: {
+    height: '100%',
+    backgroundColor: colors.accentWarm,
+    borderRadius: 2,
+  },
+  bigStatSub: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+  },
+
+  statRow: { flexDirection: 'row', gap: 10 },
+  statRowCard: {
+    flex: 1,
     backgroundColor: colors.backgroundCard,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    padding: 18,
+    padding: 16,
+    alignItems: 'center',
   },
-  momentText: {
-    fontSize: 15,
+  statRowCardAccent: {
+    borderColor: colors.accentWarm + '44',
+    backgroundColor: colors.accentWarm + '0A',
+  },
+  statRowNum: {
+    fontSize: 32,
     fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
-    lineHeight: 22,
+    letterSpacing: -1,
+    marginBottom: 4,
+  },
+  statRowLabel: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    textAlign: 'center',
+  },
+
+  insightCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: colors.accentWarm + '12',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.accentWarm + '33',
+    padding: 14,
+  },
+  insightText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  insightEm: {
+    color: colors.accentWarm,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+
+  // ── Page 2: People ───────────────────────────
+  keptCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    backgroundColor: colors.accentWarm + '10',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.accentWarm + '30',
+    padding: 14,
+    marginTop: -8,
+  },
+  keptText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+  keptNames: {
+    color: colors.accentWarm,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+
+  // ── Page 3: Moment ───────────────────────────
+  momentCard: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.09)',
+    padding: 24,
+    alignItems: 'center',
+  },
+  momentQuote: {
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    lineHeight: 26,
+    textAlign: 'center',
     fontStyle: 'italic',
   },
-  memberCard: {
+  reflectionCard: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 20,
+  },
+  reflectionTitle: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textSecondary,
+    marginBottom: 8,
+    letterSpacing: 0.3,
+  },
+  reflectionBody: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 22,
+  },
+  achieveRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    gap: 10,
+    justifyContent: 'center',
+  },
+  achieveBadge: {
+    flex: 1,
     backgroundColor: colors.backgroundCard,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: colors.border,
     padding: 14,
-    marginBottom: 8,
-    gap: 12,
+    alignItems: 'center',
+    gap: 8,
   },
-  rank: {
-    fontSize: 12,
+  achieveLabel: {
+    fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
-    width: 20,
     textAlign: 'center',
+    lineHeight: 15,
   },
-  memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+
+  // ── Page 4: Next ─────────────────────────────
+  nextCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.accentWarm + '33',
+    overflow: 'hidden',
+  },
+  nextCardGradient: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  nextAvatarRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  nextAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  memberInitials: {
+  nextAvatarText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
   },
-  memberInfo: { flex: 1 },
-  memberName: {
-    fontSize: 14,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
-    marginBottom: 2,
-  },
-  memberShared: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
-  },
-  nextSeasonCard: {
-    backgroundColor: colors.accentSoft,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(155,143,255,0.25)',
-    padding: 20,
-  },
-  nextSeasonTitle: {
+  nextCardTitle: {
     fontSize: 18,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: 10,
+    textAlign: 'center',
+    marginTop: 0,
   },
-  nextSeasonBody: {
+  nextCardBody: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+
+  hopeCard: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: 20,
+    alignItems: 'center',
+  },
+  hopeText: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    lineHeight: 24,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 10,
+  },
+  hopeSub: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.accentWarm,
+    textAlign: 'center',
+  },
+
+  // ── Non-continued path ────────────────────────
+  groupStatCard: {
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 24,
+    alignItems: 'center',
+  },
+  groupStatNum: {
+    fontSize: 56,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textPrimary,
+    letterSpacing: -2,
+    marginBottom: 4,
+  },
+  groupStatLabel: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  moreMembers: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
+  rejoinCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(168,155,255,0.2)',
+    overflow: 'hidden',
+  },
+  rejoinCardGradient: {
+    padding: 22,
+  },
+  rejoinTitle: {
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textPrimary,
+    marginBottom: 10,
+  },
+  rejoinBody: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 22,
+    marginBottom: 18,
+  },
+  rejoinFeatureList: { gap: 12 },
+  rejoinFeatureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  rejoinFeatureLabel: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: 16,
   },
-  nextSeasonBtn: {
+
+  // ── CTA buttons ──────────────────────────────
+  ctaWrap: {
+    paddingHorizontal: contentPadding,
+    gap: 12,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.textPrimary,
-    borderRadius: 10,
-    height: 44,
-    gap: 6,
+    backgroundColor: colors.accentWarm,
+    borderRadius: 14,
+    height: 52,
+    gap: 8,
   },
-  nextSeasonBtnText: {
-    fontSize: 14,
+  primaryBtnAccent: {
+    backgroundColor: colors.accent,
+  },
+  primaryBtnText: {
+    fontSize: 15,
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.background,
   },
-  shareBtn: {
+  secondaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 48,
-    borderRadius: 12,
+    backgroundColor: colors.backgroundCard,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: colors.border,
-    gap: 8,
+    height: 48,
+    gap: 6,
   },
-  shareBtnText: {
+  secondaryBtnText: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
+  },
+  ghostBtn: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  ghostBtnText: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
   },
 });

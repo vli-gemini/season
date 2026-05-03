@@ -1,16 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Switch,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { LinearGradient } from '../components/Gradient';
+import { getSeasonGradient } from '../theme/seasonGradient';
+import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
+import { GROUP_MEMBERS } from '../config/members';
+import { Embers } from '../components/Embers';
+
+// Simulated enrollment state — in a real app this would come from app-level state/context
+// 'enrolled' | 'skipped' | 'opted-out'
+const DEMO_ENROLLMENT = 'enrolled';
+const DEMO_SELECTED_IDS = new Set(['1', '3']); // Sarah, Priya saved as preferences
 
 const MOCK_USER = {
   name: 'Your Name',
@@ -57,16 +68,29 @@ function PlatformRow({ platform }) {
 }
 
 export function ProfileScreen({ navigation }) {
+  const [enrollment, setEnrollment] = useState(DEMO_ENROLLMENT);
+  const [notificationsOn, setNotificationsOn] = useState(enrollment !== 'opted-out');
+  const selectedMembers = GROUP_MEMBERS.filter((m) => DEMO_SELECTED_IDS.has(m.id));
+
+  const handleRejoin = () => {
+    setEnrollment('enrolled');
+    setNotificationsOn(true);
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient colors={colors.gradientBackground} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Embers />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity style={styles.settingsBtn}>
+        <TouchableOpacity
+          style={styles.settingsBtn}
+          onPress={() => navigation.navigate('GroupSettings')}
+        >
           <Ionicons name="settings-outline" size={20} color={colors.textSecondary} />
         </TouchableOpacity>
       </View>
@@ -110,6 +134,79 @@ export function ProfileScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Next Season */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Next Season</Text>
+          <View style={styles.card}>
+            {enrollment === 'opted-out' ? (
+              <>
+                <View style={styles.enrollmentStatusRow}>
+                  <View style={[styles.enrollmentDot, { backgroundColor: colors.error }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.enrollmentStatusLabel}>You've opted out</Text>
+                    <Text style={styles.enrollmentStatusSub}>Notifications are paused on your account.</Text>
+                  </View>
+                </View>
+                <TouchableOpacity style={styles.actionRow} onPress={handleRejoin}>
+                  <Text style={[styles.actionLabel, { color: colors.accentWarm }]}>Reconsider and rejoin</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.accentWarm} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionRow, { borderBottomWidth: 0 }]}
+                  onPress={() => navigation.navigate('SeasonEnding')}
+                >
+                  <Text style={styles.actionLabel}>Manage enrollment preferences</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={styles.enrollmentStatusRow}>
+                  <View style={[styles.enrollmentDot, { backgroundColor: '#5ECA8A' }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.enrollmentStatusLabel}>
+                      {enrollment === 'enrolled' ? "You're in for next season" : "Sitting this one out"}
+                    </Text>
+                    {selectedMembers.length > 0 ? (
+                      <View style={styles.enrollmentAvatarRow}>
+                        {selectedMembers.map((m) => (
+                          <View
+                            key={m.id}
+                            style={[styles.enrollmentAvatar, { backgroundColor: m.color + '33', borderColor: m.color + '55' }]}
+                          >
+                            <Text style={styles.enrollmentAvatarText}>{m.initials}</Text>
+                          </View>
+                        ))}
+                        <Text style={styles.enrollmentAvatarLabel}>
+                          {selectedMembers.length} {selectedMembers.length === 1 ? 'person' : 'people'} saved
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.enrollmentStatusSub}>No preferences saved yet.</Text>
+                    )}
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.actionRow}
+                  onPress={() => navigation.navigate('SeasonEnding')}
+                >
+                  <Text style={styles.actionLabel}>Update who you'd like to continue with</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionRow, { borderBottomWidth: 0 }]}
+                  onPress={() => {
+                    setEnrollment('opted-out');
+                    setNotificationsOn(false);
+                  }}
+                >
+                  <Text style={[styles.actionLabel, { color: colors.error }]}>Leave Season</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+
         {/* Platforms */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Where you create</Text>
@@ -117,26 +214,64 @@ export function ProfileScreen({ navigation }) {
             {MOCK_USER.platforms.map((p) => (
               <PlatformRow key={p.id} platform={p} />
             ))}
-            <TouchableOpacity style={styles.addPlatformBtn}>
+            <TouchableOpacity
+              style={styles.addPlatformBtn}
+              onPress={() =>
+                Alert.alert('Add platform', 'Connect additional platforms to your profile.', [
+                  { text: 'YouTube', onPress: () => {} },
+                  { text: 'TikTok', onPress: () => {} },
+                  { text: 'Instagram', onPress: () => {} },
+                  { text: 'Cancel', style: 'cancel' },
+                ])
+              }
+            >
               <Ionicons name="add" size={14} color={colors.textSecondary} />
               <Text style={styles.addPlatformText}>Add platform</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Actions */}
+        {/* Account */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.actionRow}>
-            <Text style={styles.actionLabel}>Edit profile</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionRow}>
-            <Text style={styles.actionLabel}>Notification settings</Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionRow, { borderBottomWidth: 0 }]}>
-            <Text style={[styles.actionLabel, { color: colors.error }]}>Sign out</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() =>
+                Alert.alert('Edit profile', 'Update your name, handle, and bio.', [
+                  { text: 'OK' },
+                ])
+              }
+            >
+              <Text style={styles.actionLabel}>Edit profile</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+            <View style={styles.actionRow}>
+              <Text style={styles.actionLabel}>Notifications</Text>
+              <Switch
+                value={notificationsOn}
+                onValueChange={setNotificationsOn}
+                trackColor={{ false: colors.border, true: colors.accentWarm + '80' }}
+                thumbColor={notificationsOn ? colors.accentWarm : colors.textMuted}
+              />
+            </View>
+            <TouchableOpacity
+              style={[styles.actionRow, { borderBottomWidth: 0 }]}
+              onPress={() =>
+                Alert.alert('Sign out', 'Are you sure you want to sign out?', [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Sign out',
+                    style: 'destructive',
+                    onPress: () =>
+                      navigation.reset({ index: 0, routes: [{ name: 'Auth' }] }),
+                  },
+                ])
+              }
+            >
+              <Text style={[styles.actionLabel, { color: colors.error }]}>Sign out</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -325,6 +460,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 14,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -332,5 +468,58 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
+    flex: 1,
+    marginRight: 8,
+  },
+
+  // Next Season section
+  enrollmentStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  enrollmentDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  enrollmentStatusLabel: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textPrimary,
+    marginBottom: 6,
+  },
+  enrollmentStatusSub: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+  },
+  enrollmentAvatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  enrollmentAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  enrollmentAvatarText: {
+    fontSize: 9,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+  },
+  enrollmentAvatarLabel: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
   },
 });
