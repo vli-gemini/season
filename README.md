@@ -2,6 +2,10 @@
 
 A 30-day creator community app, designed to end.
 
+## Live app
+
+**[https://season-phi.vercel.app](https://season-phi.vercel.app)**
+
 ## Setup
 
 ```bash

@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   tzPlaceholder: {
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.6)',
   },
   // Other text input
   otherInputWrapper: {
@@ -708,7 +708,7 @@ const styles = StyleSheet.create({
   tzGroupHeader: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.6)',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginTop: 24,
@@ -797,8 +797,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.18)',
   },
   connectCTAActive: {
-    backgroundColor: '#fff',
-    borderColor: '#fff',
+    backgroundColor: 'transparent',
+    borderColor: 'rgba(255,255,255,0.6)',
   },
   connectCTAText: {
     fontSize: 12,
@@ -810,7 +810,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   connectCTATextActive: {
-    color: '#000',
+    color: 'rgba(255,255,255,0.9)',
   },
   connectLabelGroup: {
     flex: 1,
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
   connectModalAt: {
     fontSize: 16,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.6)',
     marginRight: 4,
   },
   connectModalInput: {
