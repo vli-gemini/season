@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Animated,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { LinearGradient } from '../components/Gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -48,7 +50,11 @@ const MY_RANK = WRAP_DATA.members.filter((m) => m.sharedCount > WRAP_DATA.madeCo
 
 function PageDots({ total, current }) {
   return (
-    <View style={dotStyles.row}>
+    <View
+      style={dotStyles.row}
+      accessible
+      accessibilityLabel={`Page ${current + 1} of ${total}`}
+    >
       {Array.from({ length: total }).map((_, i) => (
         <View
           key={i}
@@ -57,6 +63,8 @@ function PageDots({ total, current }) {
             i === current && dotStyles.dotActive,
             i < current && dotStyles.dotDone,
           ]}
+          accessibilityElementsHidden
+          importantForAccessibility="no"
         />
       ))}
     </View>
@@ -300,7 +308,7 @@ function PagePeople({ onNext, keptMemberIds = [] }) {
       )}
 
       <View style={styles.ctaWrap}>
-        <TouchableOpacity style={styles.primaryBtn} onNext={onNext} onPress={onNext}>
+        <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>Your moment</Text>
           <Ionicons name="arrow-forward" size={15} color={colors.background} />
         </TouchableOpacity>
@@ -338,17 +346,35 @@ function PageMoment({ onNext }) {
 
       <View style={styles.section}>
         <View style={styles.achieveRow}>
-          <View style={styles.achieveBadge}>
-            <Ionicons name="trophy-outline" size={20} color={colors.accentWarm} />
-            <Text style={styles.achieveLabel}>Season{'\n'}Complete</Text>
+          <View
+            style={[styles.achieveBadge, { transform: [{ rotate: '-4deg' }], borderColor: colors.accentWarm + '70' }]}
+            accessible
+            accessibilityLabel="Season Complete badge"
+          >
+            <View style={[styles.achieveBadgeInner, { borderColor: colors.accentWarm + '40' }]}>
+              <Ionicons name="trophy-outline" size={22} color={colors.accentWarm} />
+              <Text style={[styles.achieveLabel, { color: colors.accentWarm }]}>SEASON{'\n'}COMPLETE</Text>
+            </View>
           </View>
-          <View style={styles.achieveBadge}>
-            <Ionicons name="flame-outline" size={20} color="#FF8C40" />
-            <Text style={styles.achieveLabel}>{WRAP_DATA.bestStreak}-Day{'\n'}Streak</Text>
+          <View
+            style={[styles.achieveBadge, { transform: [{ rotate: '3deg' }], borderColor: '#FF8C40' + '70' }]}
+            accessible
+            accessibilityLabel={`${WRAP_DATA.bestStreak}-Day Streak badge`}
+          >
+            <View style={[styles.achieveBadgeInner, { borderColor: '#FF8C40' + '40' }]}>
+              <Ionicons name="flame-outline" size={22} color="#FF8C40" />
+              <Text style={[styles.achieveLabel, { color: '#FF8C40' }]}>{WRAP_DATA.bestStreak}-DAY{'\n'}STREAK</Text>
+            </View>
           </View>
-          <View style={styles.achieveBadge}>
-            <Ionicons name="people-outline" size={20} color={colors.accent} />
-            <Text style={styles.achieveLabel}>Group{'\n'}Finisher</Text>
+          <View
+            style={[styles.achieveBadge, { transform: [{ rotate: '-2deg' }], borderColor: colors.accent + '70' }]}
+            accessible
+            accessibilityLabel="Group Finisher badge"
+          >
+            <View style={[styles.achieveBadgeInner, { borderColor: colors.accent + '40' }]}>
+              <Ionicons name="people-outline" size={22} color={colors.accent} />
+              <Text style={[styles.achieveLabel, { color: colors.accent }]}>GROUP{'\n'}FINISHER</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -376,43 +402,67 @@ function PageNext({ navigation, freshStart, keptMemberIds = [] }) {
       </View>
 
       <View style={styles.section}>
-        <View style={styles.nextCard}>
-          <LinearGradient
-            colors={['rgba(196,169,125,0.12)', 'rgba(196,169,125,0.04)']}
-            style={styles.nextCardGradient}
-          >
+        {/* Postcard */}
+        <View style={styles.postcard}>
+          {/* Header: postmark + stamp */}
+          <View style={styles.postcardHeader}>
+            <View style={styles.postmark}>
+              <Text style={styles.postmarkWord}>SEASON</Text>
+              <View style={styles.postmarkRule} />
+              <Text style={styles.postmarkNum}>{WRAP_DATA.seasonNumber + 1}</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <View style={styles.postcardStamp}>
+              <Ionicons name="compass-outline" size={15} color={colors.accentWarm} />
+              <Text style={styles.postcardStampLabel}>NEXT</Text>
+            </View>
+          </View>
+
+          <View style={styles.postcardRule} />
+
+          {/* Body: conditional content */}
+          <View style={styles.postcardBody}>
             {freshStart ? (
               <>
-                <Ionicons name="shuffle-outline" size={22} color={colors.accentWarm} style={{ marginBottom: 12 }} />
-                <Text style={styles.nextCardTitle}>Fresh slate. New faces.</Text>
-                <Text style={styles.nextCardBody}>
+                <Ionicons name="shuffle-outline" size={20} color="#8B6A3A" style={{ marginBottom: 10 }} />
+                <Text style={styles.postcardTitle}>Fresh slate. New faces.</Text>
+                <Text style={styles.postcardText}>
                   You asked for a completely new group. We're finding people who match where you are right now — not where you were.
                 </Text>
               </>
             ) : keptMembers.length > 0 ? (
               <>
-                <View style={styles.nextAvatarRow}>
+                <View style={[styles.nextAvatarRow, { marginBottom: 14 }]}>
                   {keptMembers.map((m) => (
-                    <View key={m.id} style={[styles.nextAvatar, { backgroundColor: m.color + '33', borderColor: m.color + '55' }]}>
+                    <View key={m.id} style={[styles.nextAvatar, { backgroundColor: m.color + '33', borderColor: m.color + '66' }]}>
                       <Text style={styles.nextAvatarText}>{m.initials}</Text>
                     </View>
                   ))}
                 </View>
-                <Text style={styles.nextCardTitle} style={{ marginTop: 14, ...styles.nextCardTitle }}>We'll try to keep you together.</Text>
-                <Text style={styles.nextCardBody}>
+                <Text style={styles.postcardTitle}>We'll try to keep you together.</Text>
+                <Text style={styles.postcardText}>
                   We noted who you want to continue with. No guarantees — but we'll do everything we can to build the right room.
                 </Text>
               </>
             ) : (
               <>
-                <Ionicons name="compass-outline" size={22} color={colors.accentWarm} style={{ marginBottom: 12 }} />
-                <Text style={styles.nextCardTitle}>A new group is coming.</Text>
-                <Text style={styles.nextCardBody}>
+                <Ionicons name="compass-outline" size={20} color="#8B6A3A" style={{ marginBottom: 10 }} />
+                <Text style={styles.postcardTitle}>A new group is coming.</Text>
+                <Text style={styles.postcardText}>
                   We'll find the right people for where you are now. New season, same commitment.
                 </Text>
               </>
             )}
-          </LinearGradient>
+          </View>
+
+          <View style={styles.postcardRule} />
+
+          {/* Address strip */}
+          <View style={styles.postcardAddress}>
+            <Text style={styles.postcardToLabel}>DELIVERED TO</Text>
+            <Text style={styles.postcardToName}>{freshStart ? 'Your New Group' : 'Your Next Season'}</Text>
+            <Text style={styles.postcardDate}>{WRAP_DATA.nextSeasonStart}</Text>
+          </View>
         </View>
       </View>
 
@@ -583,7 +633,11 @@ export function SeasonWrapScreen({ navigation, route }) {
   const keptMemberIds = route?.params?.keptMemberIds ?? [];
 
   const totalPages = continued ? 5 : 2;
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(
+    Platform.OS === 'web'
+      ? parseInt(new URLSearchParams(window.location.search).get('page') ?? '0', 10)
+      : 0
+  );
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
   const changePage = (next) => {
@@ -615,7 +669,12 @@ export function SeasonWrapScreen({ navigation, route }) {
       {/* Header */}
       <View style={styles.header}>
         {showBack ? (
-          <TouchableOpacity onPress={goBack} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={goBack}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
             <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         ) : (
@@ -693,6 +752,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -0.5,
     marginBottom: 8,
+    textShadowColor: 'rgba(176, 140, 220, 0.32)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 16,
   },
   heroDates: {
     fontSize: 13,
@@ -752,6 +814,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.09)',
     padding: 24,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
   },
   closeHeadline: {
     fontSize: 22,
@@ -784,6 +851,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     paddingVertical: 20,
     marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 16,
+    elevation: 7,
   },
   quickStat: { flex: 1, alignItems: 'center' },
   quickStatNum: {
@@ -792,6 +864,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -1,
     marginBottom: 4,
+    textShadowColor: 'rgba(176, 140, 220, 0.26)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   quickStatLabel: {
     fontSize: 11,
@@ -813,6 +888,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: 24,
     alignItems: 'center',
+    shadowColor: colors.accentWarm,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
+    elevation: 8,
   },
   bigStatNum: {
     fontSize: 72,
@@ -820,6 +900,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -3,
     lineHeight: 78,
+    textShadowColor: 'rgba(176, 140, 220, 0.28)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 18,
   },
   bigStatLabel: {
     fontSize: 14,
@@ -929,6 +1012,11 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.09)',
     padding: 24,
     alignItems: 'center',
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 8,
   },
   momentQuote: {
     fontSize: 16,
@@ -960,37 +1048,152 @@ const styles = StyleSheet.create({
   },
   achieveRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 14,
     justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 8,
   },
   achieveBadge: {
-    flex: 1,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+    backgroundColor: 'rgba(20,14,38,0.92)',
+    borderWidth: 2.5,
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  achieveBadgeInner: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
   },
   achieveLabel: {
-    fontSize: 11,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 9,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textMuted,
     textAlign: 'center',
-    lineHeight: 15,
+    lineHeight: 13,
+    letterSpacing: 0.8,
   },
 
-  // ── Page 4: Next ─────────────────────────────
-  nextCard: {
-    borderRadius: 20,
+  // ── Page 4: Next — postcard ───────────────────
+  postcard: {
+    backgroundColor: '#F0EBE1',
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: colors.accentWarm + '33',
+    borderColor: '#DDD5C8',
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 3, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  nextCardGradient: {
-    padding: 24,
+  postcardHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 12,
+  },
+  postmark: {
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 2,
+    borderColor: 'rgba(120, 40, 40, 0.50)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  postmarkWord: {
+    fontSize: 7,
+    letterSpacing: 1.8,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: 'rgba(120, 40, 40, 0.70)',
+  },
+  postmarkRule: {
+    width: 38,
+    height: 1,
+    backgroundColor: 'rgba(120, 40, 40, 0.50)',
+    marginVertical: 3,
+  },
+  postmarkNum: {
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: 'rgba(120, 40, 40, 0.70)',
+    letterSpacing: -0.5,
+  },
+  postcardStamp: {
+    width: 48,
+    height: 60,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#C0B4A6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#E6DDD0',
+  },
+  postcardStampLabel: {
+    fontSize: 7,
+    letterSpacing: 1.5,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: '#8B7A6A',
+  },
+  postcardRule: {
+    height: 1,
+    backgroundColor: '#DDD5C8',
+    marginHorizontal: 14,
+  },
+  postcardBody: {
+    padding: 18,
+    alignItems: 'center',
+  },
+  postcardTitle: {
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#2A231E',
+    marginBottom: 8,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  postcardText: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#6B5E55',
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  postcardAddress: {
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+  },
+  postcardToLabel: {
+    fontSize: 8,
+    letterSpacing: 1.8,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: '#9B8E83',
+    marginBottom: 3,
+  },
+  postcardToName: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#2A231E',
+    marginBottom: 2,
+  },
+  postcardDate: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#9B8E83',
   },
   nextAvatarRow: {
     flexDirection: 'row',

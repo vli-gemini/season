@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
@@ -24,10 +25,17 @@ function Avatar({ user, size = 30 }) {
     <View
       style={[
         styles.avatar,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: user.color + '33' },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: user.color + '33',
+          borderWidth: 1.5,
+          borderColor: user.color + '55',
+        },
       ]}
     >
-      <Text style={{ fontSize: size * 0.35, color: colors.textPrimary, fontWeight: '600' }}>
+      <Text style={{ fontSize: size * 0.35, color: colors.textPrimary, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
         {user.initials}
       </Text>
     </View>
@@ -76,23 +84,49 @@ export function DMScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <Embers />
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.navigate('DMList')} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.headerCenter}
-          onPress={() => navigation.navigate('MemberProfile', { user: otherUser })}
-          activeOpacity={0.7}
-        >
-          <Avatar user={otherUser} size={30} />
-          <Text style={styles.headerName}>{otherUser.name}</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-        </TouchableOpacity>
-        <View style={{ width: 30 }} />
+
+      {/* Header — glass bar */}
+      <View style={styles.headerWrap}>
+        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('DMList')}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.headerCenter}
+            onPress={() => navigation.navigate('MemberProfile', { user: otherUser })}
+            activeOpacity={0.7}
+            accessibilityLabel={`${otherUser.name}, active now. View profile`}
+            accessibilityRole="button"
+          >
+            <View style={styles.avatarWithDot}>
+              <Avatar user={otherUser} size={30} />
+              <View
+                style={styles.onlineDot}
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+              />
+            </View>
+            <View>
+              <Text style={styles.headerName}>{otherUser.name}</Text>
+              <Text style={styles.headerOnlineLabel}>active now</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={{ width: 30 }} />
+        </View>
       </View>
 
       {/* Messages */}
@@ -109,27 +143,37 @@ export function DMScreen({ navigation, route }) {
           showsVerticalScrollIndicator={false}
         />
 
-        <View style={styles.inputBar}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Message..."
-            placeholderTextColor={colors.textMuted}
-            value={input}
-            onChangeText={setInput}
-            multiline
-            maxLength={500}
-          />
-          <TouchableOpacity
-            onPress={send}
-            style={[styles.sendBtn, input.trim() && styles.sendBtnActive]}
-            disabled={!input.trim()}
-          >
-            <Ionicons
-              name="arrow-up"
-              size={16}
-              color={input.trim() ? colors.background : colors.textMuted}
-            />
-          </TouchableOpacity>
+        {/* Input bar — glass */}
+        <View style={styles.inputWrap}>
+          <View style={styles.inputGlass}>
+            <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, styles.inputOverlay]} />
+            <View style={styles.inputRow}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Message..."
+                placeholderTextColor={colors.textMuted}
+                value={input}
+                onChangeText={setInput}
+                multiline
+                maxLength={500}
+              />
+              <TouchableOpacity
+                onPress={send}
+                style={[styles.sendBtn, input.trim() && styles.sendBtnActive]}
+                disabled={!input.trim()}
+                accessibilityLabel="Send message"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !input.trim() }}
+              >
+                <Ionicons
+                  name="arrow-up"
+                  size={16}
+                  color={input.trim() ? '#fff' : colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -139,48 +183,80 @@ export function DMScreen({ navigation, route }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
   flex: { flex: 1 },
+
+  // Header
+  headerWrap: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  headerOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: contentPadding,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   backBtn: { padding: 4, width: 30 },
   headerCenter: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+  },
+  avatarWithDot: {
+    position: 'relative',
+  },
+  onlineDot: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#30D158',
+    borderWidth: 1.5,
+    borderColor: colors.background,
   },
   headerName: {
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans_500Medium',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
+    lineHeight: 19,
+  },
+  headerOnlineLabel: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#30D158',
+    lineHeight: 14,
   },
   avatar: { alignItems: 'center', justifyContent: 'center' },
-  list: { paddingVertical: 16, paddingHorizontal: contentPadding, paddingBottom: 8 },
+
+  // Messages
+  list: { paddingVertical: 20, paddingHorizontal: contentPadding, paddingBottom: 8 },
   msgRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginBottom: 12,
-    gap: 8,
   },
   msgRowMe: { flexDirection: 'row-reverse' },
   bubbleWrap: { maxWidth: '75%' },
   bubble: {
-    borderRadius: 16,
+    borderRadius: 20,
     paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingHorizontal: 15,
   },
   bubbleMe: {
     backgroundColor: colors.bubbleSelf,
-    borderBottomRightRadius: 4,
+    borderBottomRightRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(123, 111, 255, 0.30)',
   },
   bubbleOther: {
     backgroundColor: colors.bubbleOther,
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 5,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -193,43 +269,56 @@ const styles = StyleSheet.create({
   time: {
     fontSize: 10,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
-    marginTop: 4,
+    color: colors.textSecondary,
+    marginTop: 5,
     marginLeft: 2,
   },
   timeMe: { textAlign: 'right', marginRight: 2 },
-  inputBar: {
+
+  // Input
+  inputWrap: {
+    paddingHorizontal: contentPadding,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+  },
+  inputGlass: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  inputOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingHorizontal: contentPadding,
-    paddingVertical: 10,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 10,
   },
   textInput: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 34,
     maxHeight: 100,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: 4,
   },
   sendBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 1,
   },
-  sendBtnActive: { backgroundColor: colors.textPrimary },
+  sendBtnActive: {
+    backgroundColor: colors.accentVibrant,
+    borderColor: colors.accent,
+  },
 });

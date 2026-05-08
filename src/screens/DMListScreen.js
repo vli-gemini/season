@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { LinearGradient } from '../components/Gradient';
 import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
-import { GROUP_MEMBERS, DM_SEEDS } from '../config/members';
+import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
 
 const LAST_MESSAGES = {
@@ -26,12 +27,18 @@ const LAST_MESSAGES = {
   '7': "Solid. I've been considering the MV7. Good to hear it holds up.",
 };
 
+const TIMESTAMPS = {
+  '1': '9:41 AM', '2': '10:02 AM', '3': 'just now',
+  '4': 'yesterday', '5': '2h ago', '6': 'Mon', '7': 'Sun',
+};
+
 const UNREAD_COUNTS = { '3': 2, '5': 1 };
 
 const MEMBERS = GROUP_MEMBERS.map((m) => ({
   ...m,
   lastMsg: LAST_MESSAGES[m.id] ?? '',
   unread: UNREAD_COUNTS[m.id] ?? 0,
+  timestamp: TIMESTAMPS[m.id] ?? '',
 }));
 
 function Avatar({ member, size = 44 }) {
@@ -44,6 +51,8 @@ function Avatar({ member, size = 44 }) {
           height: size,
           borderRadius: size / 2,
           backgroundColor: member.color + '33',
+          borderWidth: 1.5,
+          borderColor: member.color + '55',
         },
       ]}
     >
@@ -55,55 +64,75 @@ function Avatar({ member, size = 44 }) {
 }
 
 export function DMListScreen({ navigation }) {
-  const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.row}
-      activeOpacity={0.7}
-      onPress={() => navigation.navigate('DM', { user: item })}
-    >
-      <Avatar member={item} size={44} />
-      <View style={styles.rowInfo}>
-        <View style={styles.rowMeta}>
-          <Text style={[styles.rowName, item.unread > 0 && styles.rowNameUnread]}>
-            {item.name}
-          </Text>
-          {item.unread > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadBadgeText}>{item.unread}</Text>
+  const renderItem = ({ item }) => {
+    const unreadHint = item.unread > 0 ? `, ${item.unread} unread` : '';
+    const rowLabel = `${item.name}, ${item.lastMsg}, ${item.timestamp}${unreadHint}`;
+    return (
+      <TouchableOpacity
+        style={styles.row}
+        activeOpacity={0.7}
+        onPress={() => navigation.navigate('DM', { user: item })}
+        accessibilityLabel={rowLabel}
+        accessibilityRole="button"
+      >
+        <Avatar member={item} size={46} />
+        <View style={styles.rowInfo}>
+          <View style={styles.rowMeta}>
+            <Text style={[styles.rowName, item.unread > 0 && styles.rowNameUnread]}>
+              {item.name}
+            </Text>
+            <View style={styles.rowMetaRight}>
+              {item.unread > 0 && (
+                <View
+                  style={styles.unreadBadge}
+                  accessible
+                  accessibilityLabel={`${item.unread} unread`}
+                >
+                  <Text style={styles.unreadBadgeText}>{item.unread}</Text>
+                </View>
+              )}
+              <Text style={[styles.timestamp, item.unread > 0 && styles.timestampUnread]}>
+                {item.timestamp}
+              </Text>
             </View>
-          )}
+          </View>
+          <Text
+            style={[styles.rowPreview, item.unread > 0 && styles.rowPreviewUnread]}
+            numberOfLines={1}
+          >
+            {item.lastMsg}
+          </Text>
         </View>
-        <Text
-          style={[styles.rowPreview, item.unread > 0 && styles.rowPreviewUnread]}
-          numberOfLines={1}
-        >
-          {item.lastMsg}
-        </Text>
-      </View>
-      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <LinearGradient
         colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <Embers />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Home')}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Messages</Text>
-        <View style={{ width: 38 }} />
+      {/* Header — glass bar */}
+      <View style={styles.headerWrap}>
+        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Home')}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Messages</Text>
+          <View style={{ width: 38 }} />
+        </View>
       </View>
 
       <FlatList
@@ -120,31 +149,38 @@ export function DMListScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  headerWrap: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  headerOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: contentPadding,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    paddingVertical: 14,
   },
   backBtn: { padding: 4, width: 38 },
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
+    letterSpacing: -0.2,
   },
   list: {
     paddingHorizontal: contentPadding,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingTop: 16,
+    paddingBottom: 32,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    gap: 12,
+    gap: 14,
   },
   avatar: { alignItems: 'center', justifyContent: 'center' },
   avatarText: {
@@ -156,41 +192,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 3,
+    marginBottom: 4,
+  },
+  rowMetaRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timestamp: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+  },
+  timestampUnread: {
+    color: colors.accentVibrant,
+    fontFamily: 'PlusJakartaSans_500Medium',
   },
   rowName: {
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textSecondary,
   },
   rowNameUnread: {
     color: colors.textPrimary,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   rowPreview: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
+    lineHeight: 18,
   },
   rowPreviewUnread: {
     color: colors.textSecondary,
     fontFamily: 'PlusJakartaSans_500Medium',
   },
   unreadBadge: {
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: colors.accentWarm,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.accentVibrant,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
   },
   unreadBadgeText: {
     fontSize: 11,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.background,
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: '#FFFFFF',
   },
   separator: {
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.05)',
+    marginLeft: 60,
   },
 });

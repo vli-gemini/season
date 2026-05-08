@@ -1,23 +1,35 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { colors } from '../theme/colors';
 import { LinearGradient } from '../components/Gradient';
 import { SocialAuthButton } from '../components/SocialAuthButton';
 
-export function AuthScreen({ navigation }) {
+export function AuthScreen({ navigation, route }) {
+  const answers = route.params?.answers ?? {};
+
   const handleProvider = (provider) => {
-    navigation.navigate('Quiz', { questionIndex: 0 });
+    // YouTube uses Google OAuth, which returns the user's verified email address.
+    // TikTok and Instagram do not expose email via their APIs.
+    // Replace this stub with the real email from the OAuth token response.
+    const verifiedEmail = provider === 'youtube' ? 'you@gmail.com' : null;
+
+    navigation.replace('Waitlist', { answers, verifiedEmail, verifiedProvider: provider });
   };
 
   return (
     <SafeAreaView style={styles.safe}>
       <LinearGradient
         colors={colors.gradientBackground}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
+
+      <View style={styles.orbTop} />
+      <View style={styles.orbBottom} />
+
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -25,22 +37,23 @@ export function AuthScreen({ navigation }) {
       >
         <View style={styles.header}>
           <Text style={styles.wordmark}>Season</Text>
-          <Text style={styles.subtitle}>Your season starts now.</Text>
+          <Text style={styles.subtitle}>Verify you're an active creator{'\n'}to join the waitlist.</Text>
         </View>
 
-        <View style={styles.authSection}>
-          <SocialAuthButton provider="google" onPress={() => handleProvider('google')} />
-          <SocialAuthButton provider="apple" onPress={() => handleProvider('apple')} />
-          <SocialAuthButton provider="facebook" onPress={() => handleProvider('facebook')} />
+        <View style={styles.glassCard}>
+          <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, styles.cardOverlay]} />
 
-          <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>or</Text>
-            <View style={styles.dividerLine} />
+          <View style={styles.authSection}>
+            <SocialAuthButton provider="youtube"   onPress={() => handleProvider('youtube')} />
+            <SocialAuthButton provider="instagram" onPress={() => handleProvider('instagram')} />
+            <SocialAuthButton provider="tiktok"    onPress={() => handleProvider('tiktok')} />
           </View>
-
-          <SocialAuthButton provider="email" onPress={() => handleProvider('email')} />
         </View>
+
+        <Text style={styles.legalText}>
+          We verify you're an active creator. We never post on your behalf.
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -51,47 +64,78 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  orbTop: {
+    position: 'absolute',
+    top: -60,
+    left: -40,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
+    backgroundColor: 'rgba(176, 140, 220, 0.12)',
+    shadowColor: '#B08CDC',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 80,
+  },
+  orbBottom: {
+    position: 'absolute',
+    bottom: 40,
+    right: -60,
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(100, 160, 180, 0.10)',
+    shadowColor: '#64A0B4',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 70,
+  },
   container: {
     flexGrow: 1,
-    paddingHorizontal: 32,
-    paddingVertical: 196,
-    gap: 80,
+    paddingHorizontal: 28,
+    paddingTop: 64,
+    paddingBottom: 40,
+    gap: 40,
+    justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    gap: 32,
+    gap: 16,
   },
   wordmark: {
-    fontSize: 48,
+    fontSize: 54,
     fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#F7DCB9',
-    lineHeight: 58,
+    color: colors.textPrimary,
+    lineHeight: 64,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 17,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
-    lineHeight: 22,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: colors.textSecondary,
+    lineHeight: 26,
     textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  glassCard: {
+    borderRadius: 28,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+    padding: 20,
+  },
+  cardOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
   authSection: {
-    gap: 12,
+    gap: 10,
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dividerText: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: '#98989D',
+  legalText: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    textAlign: 'center',
     lineHeight: 16,
   },
 });

@@ -1,9 +1,9 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { LinearGradient } from './Gradient';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, View } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { colors } from '../theme/colors';
 
-export function Button({ label, onPress, variant = 'primary', loading = false, disabled = false, style }) {
+export function Button({ label, onPress, variant = 'primary', color, textColor, loading = false, disabled = false, style }) {
   const isDisabled = disabled || loading;
 
   if (variant === 'primary') {
@@ -14,20 +14,53 @@ export function Button({ label, onPress, variant = 'primary', loading = false, d
         activeOpacity={0.82}
         accessibilityRole="button"
         accessibilityState={{ disabled: isDisabled }}
-        style={[styles.touchable, isDisabled && styles.disabled, style]}
+        style={[styles.touchable, styles.primaryBg, isDisabled && styles.disabled, style]}
       >
-        <LinearGradient
-          colors={colors.gradientButton}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.gradient}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.labelPrimary}>{label}</Text>
-          )}
-        </LinearGradient>
+        {loading ? (
+          <ActivityIndicator color={colors.textPrimary} size="small" />
+        ) : (
+          <Text style={styles.labelPrimary}>{label}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  if (variant === 'solid') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.82}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled }}
+        style={[styles.touchable, { backgroundColor: color }, isDisabled && styles.disabled, style]}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={[styles.labelSolid, textColor && { color: textColor }]}>{label}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  }
+
+  if (variant === 'outline') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        disabled={isDisabled}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: isDisabled }}
+        style={[styles.touchable, styles.outlineBorder, isDisabled && styles.disabled, style]}
+      >
+        <BlurView intensity={14} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.glassOverlay]} />
+        {loading ? (
+          <ActivityIndicator color={colors.textPrimary} size="small" />
+        ) : (
+          <Text style={[styles.label, styles.label_outline]}>{label}</Text>
+        )}
       </TouchableOpacity>
     );
   }
@@ -39,7 +72,7 @@ export function Button({ label, onPress, variant = 'primary', loading = false, d
       activeOpacity={0.75}
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled }}
-      style={[styles.base, styles[variant], isDisabled && styles.disabled, style]}
+      style={[styles.base, isDisabled && styles.disabled, style]}
     >
       {loading ? (
         <ActivityIndicator color={colors.textPrimary} size="small" />
@@ -52,20 +85,34 @@ export function Button({ label, onPress, variant = 'primary', loading = false, d
 
 const styles = StyleSheet.create({
   touchable: {
+    height: 56,
     borderRadius: 999,
     overflow: 'hidden',
-  },
-  gradient: {
-    height: 54,
-    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 28,
+  },
+  primaryBg: {
+    backgroundColor: 'rgba(255, 255, 255, 0.80)',
+  },
+  outlineBorder: {
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  glassOverlay: {
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    borderRadius: 999,
+  },
+  labelSolid: {
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: '#1C1A2E',
+    letterSpacing: 0.2,
   },
   labelPrimary: {
     fontSize: 16,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: '#FFFFFF',
+    color: '#000000',
     letterSpacing: 0.2,
   },
   base: {
@@ -75,16 +122,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
-  outline: {
-    backgroundColor: colors.backgroundCard,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  ghost: {
-    backgroundColor: 'transparent',
-  },
   disabled: {
-    opacity: 0.42,
+    opacity: 0.38,
   },
   label: {
     fontSize: 15,

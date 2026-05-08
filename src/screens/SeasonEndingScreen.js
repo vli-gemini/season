@@ -8,18 +8,24 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../components/Gradient';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
+
+const CARD_GAP = 10;
+const CARD_WIDTH = (Dimensions.get('window').width - contentPadding * 2 - CARD_GAP) / 2;
 import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
 
 const MEMBERS = GROUP_MEMBERS;
+const POLAROID_ROTATIONS = ['-2.5deg', '1.8deg', '-1.2deg', '2.2deg', '-2deg', '1.5deg', '-1.8deg'];
 
 const SEASON_STATS = {
   madeCount: 22,
@@ -123,7 +129,12 @@ export function SeasonEndingScreen({ navigation, route }) {
   const daysLeft = TOTAL_DAYS - day;
   const isEnded = daysLeft <= 0;
 
-  const [view, setView] = useState('main');
+  const [view, setView] = useState(() => {
+    if (Platform.OS !== 'web') return 'main';
+    const v = new URLSearchParams(window.location.search).get('view');
+    const valid = ['main','confirmed','optout-reason','optout-confirm','optout-done','review-prefs','edit-prefs','more-questions'];
+    return valid.includes(v) ? v : 'main';
+  });
   const [selected, setSelected] = useState(new Set());
   const [freshStart, setFreshStart] = useState(false);
   const [optoutReason, setOptoutReason] = useState('');
@@ -174,8 +185,15 @@ export function SeasonEndingScreen({ navigation, route }) {
       <Embers />
 
       <View style={styles.header}>
+        <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.04)' }]} />
         {showBack ? (
-          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
             <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
           </TouchableOpacity>
         ) : (
@@ -234,6 +252,9 @@ export function SeasonEndingScreen({ navigation, route }) {
                   style={[styles.freshStartCard, freshStart && styles.freshStartCardActive]}
                   activeOpacity={0.75}
                   onPress={toggleFreshStart}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: freshStart }}
+                  accessibilityLabel="Continue with a fresh batch — match me with a new group"
                 >
                   <View style={[styles.freshStartIcon, freshStart && styles.freshStartIconActive]}>
                     <Ionicons
@@ -258,23 +279,40 @@ export function SeasonEndingScreen({ navigation, route }) {
                 <Text style={styles.orDivider}>or pick specific people</Text>
 
                 <View style={[styles.membersGrid, freshStart && styles.membersGridDimmed]}>
-                  {MEMBERS.map((member) => (
-                    <TouchableOpacity
-                      key={member.id}
-                      style={[
-                        styles.memberCard,
-                        selected.has(member.id) && {
-                          borderColor: member.color,
-                          backgroundColor: member.color + '18',
-                        },
-                      ]}
-                      activeOpacity={0.75}
-                      onPress={() => toggleMember(member.id)}
-                    >
-                      <Avatar member={member} size={44} selected={selected.has(member.id)} />
-                      <Text style={styles.memberName}>{member.name.split(' ')[0]}</Text>
-                    </TouchableOpacity>
-                  ))}
+                  {MEMBERS.map((member, i) => {
+                    const isSelected = selected.has(member.id);
+                    return (
+                      <TouchableOpacity
+                        key={member.id}
+                        style={[
+                          styles.memberCard,
+                          { transform: [{ rotate: POLAROID_ROTATIONS[i % POLAROID_ROTATIONS.length] }] },
+                          isSelected && styles.memberCardSelected,
+                        ]}
+                        activeOpacity={0.85}
+                        onPress={() => toggleMember(member.id)}
+                        accessibilityRole="checkbox"
+                        accessibilityState={{ checked: isSelected }}
+                        accessibilityLabel={`Continue with ${member.name}`}
+                      >
+                        {/* Photo area */}
+                        <View style={[styles.polaroidPhoto, { backgroundColor: member.color + '28' }]}>
+                          <View style={[styles.polaroidAvatarRing, { borderColor: member.color + '70' }]}>
+                            <View style={[styles.polaroidAvatarInner, { backgroundColor: member.color + '40' }]}>
+                              <Text style={styles.polaroidInitials}>{member.initials}</Text>
+                            </View>
+                          </View>
+                          {isSelected && (
+                            <View style={[styles.polaroidCheckmark, { backgroundColor: member.color }]}>
+                              <Ionicons name="checkmark" size={11} color="#fff" />
+                            </View>
+                          )}
+                        </View>
+                        {/* Caption strip */}
+                        <Text style={styles.polaroidName}>{member.name.split(' ')[0]}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
 
@@ -734,6 +772,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: contentPadding,
     paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
+    overflow: 'hidden',
   },
   backBtn: { padding: 4, width: 38 },
   scroll: { paddingBottom: 20 },
@@ -758,6 +799,9 @@ const styles = StyleSheet.create({
     color: colors.accentWarm,
     letterSpacing: -1,
     marginBottom: 6,
+    textShadowColor: 'rgba(255, 133, 38, 0.45)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 16,
   },
   heroTitle: {
     fontSize: 26,
@@ -800,6 +844,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     padding: 20,
     marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.30,
+    shadowRadius: 18,
+    elevation: 8,
   },
   statItem: { flex: 1, alignItems: 'center' },
   statNumber: {
@@ -808,6 +857,9 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     letterSpacing: -1,
     marginBottom: 2,
+    textShadowColor: 'rgba(176, 140, 220, 0.28)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 10,
   },
   statLabel: {
     fontSize: 12,
@@ -831,6 +883,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
   },
   contextTitle: {
     fontSize: 17,
@@ -916,46 +973,79 @@ const styles = StyleSheet.create({
   membersGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: CARD_GAP + 4,
+    paddingVertical: 8,
   },
   membersGridDimmed: {
     opacity: 0.35,
   },
   memberCard: {
-    width: '47%',
-    flexDirection: 'row',
+    width: CARD_WIDTH,
+    backgroundColor: '#EDE8DF',
+    borderRadius: 2,
+    padding: 7,
+    paddingBottom: 26,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 5 },
+    shadowOpacity: 0.32,
+    shadowRadius: 8,
+    elevation: 7,
+  },
+  memberCardSelected: {
+    shadowColor: '#9A80B5',
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  polaroidPhoto: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 1,
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    justifyContent: 'center',
   },
-  memberAvatarWrap: { position: 'relative' },
-  avatar: { alignItems: 'center', justifyContent: 'center' },
-  avatarText: {
+  polaroidAvatarRing: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  polaroidAvatarInner: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  polaroidInitials: {
+    fontSize: 16,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: 'rgba(255,255,255,0.9)',
   },
-  checkBadge: {
+  polaroidCheckmark: {
     position: 'absolute',
-    bottom: -2,
-    right: -2,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    top: 5,
+    right: 5,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: colors.background,
+    borderColor: '#EDE8DF',
   },
-  memberName: {
-    fontSize: 14,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
-    flex: 1,
+  polaroidName: {
+    position: 'absolute',
+    bottom: 7,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: '#3A3330',
+    letterSpacing: 0.2,
   },
 
   disclaimerWrap: {

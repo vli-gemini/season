@@ -1,0 +1,1 @@
+export { HandwritingEffect } from './HandwritingEffect';

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,11 @@ import {
   Platform,
   ActionSheetIOS,
   Alert,
+  PanResponder,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { LinearGradient } from '../components/Gradient';
@@ -20,10 +23,16 @@ import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { ALL_MEMBERS, ME } from '../config/members';
 import { Embers } from '../components/Embers';
+import { SeasonMascot } from '../components/SeasonMascot';
 
 const MEMBERS = ALL_MEMBERS;
 
 const INITIAL_MESSAGES = [
+  {
+    id: 'sep-today',
+    type: 'date',
+    label: 'Today',
+  },
   {
     id: '1',
     sender: MEMBERS[0],
@@ -77,7 +86,9 @@ function Avatar({ member, size = 34 }) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: member.color + '40',
+          backgroundColor: member.color + '35',
+          borderWidth: 1.5,
+          borderColor: member.color + '55',
         },
       ]}
     >
@@ -88,27 +99,22 @@ function Avatar({ member, size = 34 }) {
   );
 }
 
-function GroupAvatar({ size = 52 }) {
+function DateSeparator({ label }) {
   return (
-    <View
-      style={[
-        styles.groupAvatarWrap,
-        { width: size, height: size, borderRadius: size / 2 },
-      ]}
-    >
-      <LinearGradient
-        colors={['#6B5FD4', '#3D2E8C']}
-        style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
-      />
-      <Ionicons name="people" size={size * 0.46} color="rgba(255,255,255,0.85)" />
+    <View style={styles.dateSep}>
+      <View style={styles.dateSepLine} />
+      <Text style={styles.dateSepText}>{label}</Text>
+      <View style={styles.dateSepLine} />
     </View>
   );
 }
 
-function Message({ message, prevSender }) {
+function Message({ message, prevMessage, onSenderPress }) {
   const isMe = message.sender?.isMe;
   const isSystem = message.type === 'system';
-  const isSameSenderAsPrev = prevSender && prevSender === message.sender?.id;
+
+  const prevIsReal = prevMessage && prevMessage.type !== 'date' && prevMessage.type !== 'system';
+  const isSameGroup = prevIsReal && prevMessage.sender?.id === message.sender?.id;
 
   if (isSystem) {
     return (
@@ -118,21 +124,163 @@ function Message({ message, prevSender }) {
     );
   }
 
+  const senderName = isMe ? 'You' : message.sender?.name ?? '';
+  const a11yLabel = `${senderName}: ${message.text}`;
+
   return (
-    <View style={[styles.messageRow, isMe && styles.messageRowMe, isSameSenderAsPrev && styles.messageRowCompact]}>
-      {/* Avatar placeholder to maintain alignment */}
+    <View
+      style={[
+        styles.messageRow,
+        isMe && styles.messageRowMe,
+        isSameGroup ? styles.messageRowGrouped : styles.messageRowFirst,
+      ]}
+      accessible
+      accessibilityLabel={a11yLabel}
+    >
+      {/* Avatar column — other senders only */}
       {!isMe && (
-        <View style={styles.avatarSlot}>
-          {!isSameSenderAsPrev && <Avatar member={message.sender} size={34} />}
-        </View>
+        <TouchableOpacity
+          style={styles.avatarCol}
+          onPress={() => onSenderPress?.(message.sender)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`View ${message.sender?.name}'s profile`}
+        >
+          {!isSameGroup && <Avatar member={message.sender} size={30} />}
+        </TouchableOpacity>
       )}
-      <View style={[styles.messageBubbleWrap, isMe && styles.messageBubbleWrapMe]}>
-        {!isMe && !isSameSenderAsPrev && (
-          <Text style={styles.senderName}>{message.sender.name}</Text>
+
+      <View style={[styles.bubbleCol, isMe && styles.bubbleColMe]}>
+        {/* Sender name + timestamp on first message of a group */}
+        {!isMe && !isSameGroup && (
+          <TouchableOpacity
+            style={styles.senderRow}
+            onPress={() => onSenderPress?.(message.sender)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.senderName, { color: message.sender.color }]}>
+              {message.sender.name.split(' ')[0]}
+            </Text>
+            <Text style={styles.msgTime}>{message.timestamp}</Text>
+          </TouchableOpacity>
         )}
+
         <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
-          <Text style={styles.bubbleText}>{message.text}</Text>
+          <Text style={[styles.bubbleText, isMe && styles.bubbleTextMe]}>
+            {message.text}
+          </Text>
         </View>
+
+        {/* Timestamp for my messages, right-aligned under bubble */}
+        {isMe && !isSameGroup && (
+          <Text style={styles.myTime}>{message.timestamp}</Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+function clampDay(relX, width, total) {
+  const pct = Math.max(0, Math.min(1, relX / width));
+  return Math.max(1, Math.min(total, Math.round(pct * (total - 1)) + 1));
+}
+
+function SeasonProgressHeader({ day, totalDays, onDayChange }) {
+  const progress = (day - 1) / (totalDays - 1);
+  const daysLeft = totalDays - day;
+
+  const trackRef   = useRef(null);
+  const trackW     = useRef(0);
+  const trackPageX = useRef(0);
+  const dayScale   = useRef(new Animated.Value(1)).current;
+  const prevDay    = useRef(day);
+
+  useEffect(() => {
+    if (day === prevDay.current) return;
+    prevDay.current = day;
+    Animated.sequence([
+      Animated.timing(dayScale, { toValue: 1.3, duration: 90, useNativeDriver: true }),
+      Animated.spring(dayScale, { toValue: 1, useNativeDriver: true, friction: 4 }),
+    ]).start();
+  }, [day]);
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder:  () => true,
+      onPanResponderGrant: (evt) => {
+        const relX = evt.nativeEvent.pageX - trackPageX.current;
+        onDayChange(clampDay(relX, trackW.current, totalDays));
+      },
+      onPanResponderMove: (evt, gs) => {
+        const relX = gs.moveX - trackPageX.current;
+        onDayChange(clampDay(relX, trackW.current, totalDays));
+      },
+    })
+  ).current;
+
+  const thumbPct = `${Math.round(progress * 100)}%`;
+
+  return (
+    <View style={styles.progressCard}>
+      <BlurView intensity={16} tint="light" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.progressCardOverlay]} />
+
+      <View style={styles.progressCardRow}>
+        <TouchableOpacity
+          onPress={() => onDayChange(Math.max(1, day - 1))}
+          style={styles.dayArrow}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          accessibilityLabel="Previous day"
+          accessibilityRole="button"
+        >
+          <Ionicons name="chevron-back" size={13} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <Animated.Text
+          style={[styles.progressCardDay, { transform: [{ scale: dayScale }] }]}
+        >
+          Day {day}
+        </Animated.Text>
+
+        <TouchableOpacity
+          onPress={() => onDayChange(Math.min(totalDays, day + 1))}
+          style={styles.dayArrow}
+          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+          accessibilityLabel="Next day"
+          accessibilityRole="button"
+        >
+          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <Text style={styles.progressCardOf}>of {totalDays}</Text>
+        <View style={styles.progressCardSpacer} />
+        <Text style={styles.progressCardRight}>
+          {daysLeft > 0 ? `${daysLeft} days left` : 'Season complete'}
+        </Text>
+      </View>
+
+      {/* Scrubber — tap or drag to jump to any day */}
+      <View
+        ref={trackRef}
+        style={styles.progressTrackOuter}
+        onLayout={() => {
+          trackRef.current?.measure((_fx, _fy, w, _h, px) => {
+            trackW.current = w;
+            trackPageX.current = px;
+          });
+        }}
+        {...panResponder.panHandlers}
+      >
+        <View style={styles.progressTrack} pointerEvents="none">
+          <LinearGradient
+            colors={getSeasonGradient(day, totalDays)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.progressFill, { width: thumbPct }]}
+          />
+        </View>
+        <View style={[styles.progressThumb, { left: thumbPct }]} />
       </View>
     </View>
   );
@@ -143,9 +291,6 @@ export function HomeScreen({ navigation }) {
   const [input, setInput] = useState('');
   const [day, setDay] = useState(CURRENT_DAY);
   const flatListRef = useRef(null);
-
-  const prevDay = () => setDay(d => Math.max(1, d - 1));
-  const nextDay = () => setDay(d => Math.min(TOTAL_DAYS, d + 1));
 
   const handleAttach = () => {
     const options = ['Share a link', 'Share a photo', 'Record a video', 'Cancel'];
@@ -195,81 +340,87 @@ export function HomeScreen({ navigation }) {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
+  const daysLeft = TOTAL_DAYS - day;
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient colors={getSeasonGradient(day, TOTAL_DAYS)} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient
+        colors={getSeasonGradient(day, TOTAL_DAYS)}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
       <Embers currentDay={day} />
 
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Left: day counter */}
-        <View style={styles.dayControl}>
-          <TouchableOpacity onPress={prevDay} style={styles.dayArrow}>
-            <Ionicons name="chevron-back" size={14} color={colors.textSecondary} />
-          </TouchableOpacity>
-          <Text style={styles.dayLabel}>
-            Day <Text style={styles.dayLabelBold}>{day}</Text>
-            <Text style={styles.dayLabelTotal}>/{TOTAL_DAYS}</Text>
-          </Text>
-          <TouchableOpacity onPress={nextDay} style={styles.dayArrow}>
-            <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
+      {/* ── Header ── */}
+      <View style={styles.headerWrap}>
+        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
 
-        {/* Center: group avatar + name */}
-        <TouchableOpacity
-          style={styles.headerCenter}
-          activeOpacity={0.7}
-          onPress={() => navigation.navigate('GroupSettings')}
-        >
-          <GroupAvatar size={50} />
-          <Text style={styles.groupName}>the hideout</Text>
-        </TouchableOpacity>
-
-        {/* Right: action buttons */}
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('DMList')}
-          >
-            <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textSecondary} />
-          </TouchableOpacity>
+        <View style={styles.header}>
+          {/* Left: my avatar → Profile */}
           <TouchableOpacity
             style={styles.headerAvatarBtn}
             onPress={() => navigation.navigate('Profile')}
+            activeOpacity={0.75}
+            accessibilityLabel="Your profile"
+            accessibilityRole="button"
           >
             <Avatar member={ME} size={34} />
+          </TouchableOpacity>
+
+          {/* Center: group name + context */}
+          <TouchableOpacity
+            style={styles.headerCenter}
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('GroupSettings')}
+            accessibilityLabel="the hideout group settings"
+            accessibilityRole="button"
+          >
+            <Text style={styles.groupName}>the hideout</Text>
+            <Text style={styles.groupSub}>
+              {MEMBERS.length} creators · day {day}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Right: DMs */}
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={() => navigation.navigate('DMList')}
+            accessibilityLabel="Direct messages"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={19} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Season countdown banner — visible in the last 7 days */}
-      {(TOTAL_DAYS - day) <= 7 && (
+      {/* ── Season ending banner ── */}
+      {daysLeft <= 7 && (
         <TouchableOpacity
-          style={[
-            styles.countdownBanner,
-            (TOTAL_DAYS - day) <= 0 && styles.countdownBannerEnded,
-          ]}
+          style={[styles.countdownBanner, daysLeft <= 0 && styles.countdownBannerEnded]}
           activeOpacity={0.8}
           onPress={() => navigation.navigate('SeasonEnding', { day })}
         >
+          <BlurView intensity={14} tint="light" style={StyleSheet.absoluteFill} />
+          <View style={[StyleSheet.absoluteFill, styles.bannerOverlay, daysLeft <= 0 && styles.bannerOverlayEnded]} />
           <Ionicons
-            name={(TOTAL_DAYS - day) <= 0 ? 'ribbon-outline' : 'time-outline'}
-            size={14}
+            name={daysLeft <= 0 ? 'ribbon-outline' : 'time-outline'}
+            size={13}
             color={colors.accentWarm}
           />
           <Text style={styles.countdownText}>
-            {(TOTAL_DAYS - day) <= 0
-              ? 'Your season has ended — see what\'s next'
-              : (TOTAL_DAYS - day) === 1
-              ? 'Last day of the season — choose who you continue with'
-              : `Season ends in ${TOTAL_DAYS - day} days — choose who you continue with`}
+            {daysLeft <= 0
+              ? "Your season has ended — see what's next"
+              : daysLeft === 1
+              ? 'Last day — choose who you continue with'
+              : `${daysLeft} days left — choose who continues with you`}
           </Text>
-          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
         </TouchableOpacity>
       )}
 
-      {/* Messages */}
+      {/* ── Messages + input ── */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.flex}
@@ -279,42 +430,79 @@ export function HomeScreen({ navigation }) {
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          renderItem={({ item, index }) => (
-            <Message
-              message={item}
-              prevSender={index > 0 ? messages[index - 1].sender?.id : null}
+          renderItem={({ item, index }) => {
+            if (item.type === 'date') {
+              return <DateSeparator label={item.label} />;
+            }
+            const prev = index > 0 ? messages[index - 1] : null;
+            return (
+              <Message
+                message={item}
+                prevMessage={prev}
+                onSenderPress={(sender) => {
+                  if (sender.isMe) navigation.navigate('Profile');
+                  else navigation.navigate('MemberProfile', { user: sender });
+                }}
+              />
+            );
+          }}
+          ListHeaderComponent={
+            <SeasonProgressHeader
+              day={day}
+              totalDays={TOTAL_DAYS}
+              onDayChange={setDay}
             />
-          )}
+          }
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
         />
 
-        {/* Input bar */}
+        {/* ── Sprig — season mascot ── */}
+        <SeasonMascot
+          day={day}
+          totalDays={TOTAL_DAYS}
+          style={styles.mascot}
+        />
+
+        {/* ── Input bar ── */}
         <View style={styles.inputBarWrap}>
-          <View style={styles.inputBar}>
-            <TouchableOpacity style={styles.plusBtn} onPress={handleAttach}>
-              <Ionicons name="add" size={22} color={colors.textSecondary} />
-            </TouchableOpacity>
-            <TextInput
-              style={styles.textInput}
-              placeholder="Share what you made..."
-              placeholderTextColor={colors.textMuted}
-              value={input}
-              onChangeText={setInput}
-              multiline
-              maxLength={500}
-            />
-            <TouchableOpacity
-              onPress={sendMessage}
-              style={[styles.sendBtn, input.trim() && styles.sendBtnActive]}
-              disabled={!input.trim()}
-            >
-              <Ionicons
-                name="arrow-up"
-                size={17}
-                color={input.trim() ? '#fff' : colors.textMuted}
+          <View style={styles.inputBarGlass}>
+            <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, styles.inputBarOverlay]} />
+
+            <View style={styles.inputBar}>
+              <TouchableOpacity
+                style={styles.attachBtn}
+                onPress={handleAttach}
+                accessibilityLabel="Attach file"
+                accessibilityRole="button"
+              >
+                <Ionicons name="add-circle-outline" size={22} color={colors.textMuted} />
+              </TouchableOpacity>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Share what you made..."
+                placeholderTextColor={colors.textMuted}
+                value={input}
+                onChangeText={setInput}
+                multiline
+                maxLength={500}
               />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={sendMessage}
+                style={[styles.sendBtn, input.trim() && styles.sendBtnActive]}
+                disabled={!input.trim()}
+                accessibilityLabel="Send message"
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !input.trim() }}
+              >
+                <Ionicons
+                  name="arrow-up"
+                  size={16}
+                  color={input.trim() ? '#fff' : colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -327,123 +515,55 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-
-  // Countdown banner
-  countdownBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: contentPadding,
-    marginBottom: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(196,169,125,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(196,169,125,0.2)',
-  },
-  countdownBannerEnded: {
-    backgroundColor: 'rgba(155,143,255,0.1)',
-    borderColor: 'rgba(155,143,255,0.2)',
-  },
-  countdownText: {
-    flex: 1,
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
-    lineHeight: 17,
-  },
   flex: { flex: 1 },
 
-  // Header
+  // ── Header ──
+  headerWrap: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  headerOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: contentPadding,
     paddingTop: 10,
-    paddingBottom: 8,
-  },
-  dayControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  dayArrow: {
-    padding: 4,
-  },
-  dayLabel: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.accentWarm,
-  },
-  dayLabelBold: {
-    fontSize: 15,
-    fontFamily: 'PlusJakartaSans_700Bold',
-    color: colors.accentWarm,
-  },
-  dayLabelTotal: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.accentWarm,
-  },
-  headerCenter: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  groupAvatarWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  groupName: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
-    letterSpacing: 0.1,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    width: 80,
-    justifyContent: 'flex-end',
-  },
-  headerIconBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingBottom: 12,
+    gap: 12,
   },
   headerAvatarBtn: {
-    borderRadius: 17,
-    overflow: 'hidden',
+    flexShrink: 0,
   },
-
-  // Messages
-  messageList: {
-    paddingHorizontal: contentPadding,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  messageRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    marginBottom: 4,
-    gap: 8,
-  },
-  messageRowMe: {
-    flexDirection: 'row-reverse',
-  },
-  messageRowCompact: {
-    marginBottom: 2,
-  },
-  avatarSlot: {
-    width: 34,
+  headerCenter: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'flex-end',
+  },
+  groupName: {
+    fontSize: 16,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  groupSub: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    marginTop: 1,
+    letterSpacing: 0.1,
+  },
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   avatar: {
     alignItems: 'center',
@@ -453,41 +573,221 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
   },
-  messageBubbleWrap: {
-    maxWidth: '78%',
+
+  // ── Season ending banner ──
+  countdownBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: contentPadding,
+    marginTop: 10,
+    marginBottom: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(176, 140, 220, 0.20)',
   },
-  messageBubbleWrapMe: {
+  countdownBannerEnded: {
+    borderColor: 'rgba(100, 160, 180, 0.20)',
+  },
+  bannerOverlay: {
+    backgroundColor: 'rgba(184, 158, 200, 0.10)',
+  },
+  bannerOverlayEnded: {
+    backgroundColor: 'rgba(138, 173, 160, 0.10)',
+  },
+  countdownText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    lineHeight: 17,
+  },
+
+  // ── Message list ──
+  messageList: {
+    paddingHorizontal: contentPadding,
+    paddingTop: 14,
+    paddingBottom: 8,
+  },
+
+  // ── Season progress card (list header) ──
+  progressCard: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: 16,
+    paddingTop: 13,
+    paddingBottom: 14,
+    marginBottom: 20,
+  },
+  progressCardOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.45)',
+  },
+  progressCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 2,
+  },
+  dayArrow: {
+    width: 22,
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressCardDay: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+    minWidth: 52,
+    textAlign: 'center',
+  },
+  progressCardOf: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+    marginLeft: 2,
+  },
+  progressCardSpacer: { flex: 1 },
+  progressCardRight: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textMuted,
+  },
+  // Outer wrapper carries the pan responder and allows thumb to overflow
+  progressTrackOuter: {
+    height: 18,
+    justifyContent: 'center',
+  },
+  progressTrack: {
+    height: 5,
+    borderRadius: 5,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  progressThumb: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#fff',
+    top: 2,
+    marginLeft: -7,
+    borderWidth: 2,
+    borderColor: colors.accent,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+
+  // ── Date separator ──
+  dateSep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginVertical: 16,
+  },
+  dateSepLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dateSepText: {
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: colors.textMuted,
+    letterSpacing: 0.5,
+  },
+
+  // ── Messages ──
+  messageRow: {
+    flexDirection: 'row',
     alignItems: 'flex-end',
+    gap: 8,
+  },
+  messageRowMe: {
+    flexDirection: 'row-reverse',
+  },
+  messageRowFirst: {
+    marginTop: 14,
+    marginBottom: 2,
+  },
+  messageRowGrouped: {
+    marginTop: 3,
+    marginBottom: 2,
+  },
+  avatarCol: {
+    width: 30,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    alignSelf: 'flex-end',
+    marginBottom: 2,
+  },
+  bubbleCol: {
+    maxWidth: '76%',
+  },
+  bubbleColMe: {
+    alignItems: 'flex-end',
+  },
+  senderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 6,
+    marginBottom: 4,
+    marginLeft: 2,
   },
   senderName: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_600SemiBold',
+    letterSpacing: 0.1,
+  },
+  msgTime: {
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
-    marginBottom: 4,
-    marginLeft: 4,
+  },
+  myTime: {
+    fontSize: 10,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: colors.textSecondary,
+    marginTop: 3,
+    marginRight: 2,
   },
   bubble: {
-    borderRadius: 20,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
+    borderRadius: 18,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
   },
   bubbleMe: {
-    backgroundColor: 'rgba(168,155,255,0.25)',
-    borderBottomRightRadius: 6,
+    backgroundColor: colors.bubbleSelf,
+    borderBottomRightRadius: 4,
   },
   bubbleOther: {
-    backgroundColor: 'rgba(255,255,255,0.09)',
-    borderBottomLeftRadius: 6,
+    backgroundColor: colors.bubbleOther,
+    borderBottomLeftRadius: 4,
   },
   bubbleText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
-    lineHeight: 21,
+    lineHeight: 22,
+  },
+  bubbleTextMe: {
+    color: colors.textPrimary,
   },
   systemMsg: {
     alignItems: 'center',
-    marginVertical: 14,
+    marginVertical: 12,
   },
   systemText: {
     fontSize: 12,
@@ -500,48 +800,65 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Input
+  // ── Mascot ──
+  mascot: {
+    position: 'absolute',
+    right: 16,
+    bottom: Platform.OS === 'ios' ? 96 : 74,
+    zIndex: 10,
+  },
+
+  // ── Input bar ──
   inputBarWrap: {
     paddingHorizontal: contentPadding,
     paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 30 : 12,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+  },
+  inputBarGlass: {
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  inputBarOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    paddingLeft: 10,
+    paddingRight: 8,
+    paddingVertical: 8,
+    gap: 6,
   },
-  plusBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
+  attachBtn: {
+    paddingHorizontal: 2,
+    paddingVertical: 6,
     justifyContent: 'center',
-    marginBottom: 1,
   },
   textInput: {
     flex: 1,
-    minHeight: 36,
+    minHeight: 34,
     maxHeight: 110,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
-    fontSize: 14,
+    paddingHorizontal: 6,
+    paddingVertical: 7,
+    fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
   },
   sendBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.backgroundCard,
+    borderWidth: 1,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 1,
   },
   sendBtnActive: {
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accentVibrant,
+    borderColor: colors.accent,
   },
 });

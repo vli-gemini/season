@@ -11,6 +11,10 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { DMSerifDisplay_400Regular } from '@expo-google-fonts/dm-serif-display';
+import { DancingScript_700Bold } from '@expo-google-fonts/dancing-script';
+import { GreatVibes_400Regular } from '@expo-google-fonts/great-vibes';
+import { ArchivoBlack_400Regular } from '@expo-google-fonts/archivo-black';
+import { Bungee_400Regular } from '@expo-google-fonts/bungee';
 import { Navigation } from './src/navigation';
 
 export default function App() {
@@ -21,6 +25,10 @@ export default function App() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
     DMSerifDisplay_400Regular,
+    DancingScript_700Bold,
+    GreatVibes_400Regular,
+    ArchivoBlack_400Regular,
+    Bungee_400Regular,
   });
 
   if (!fontsLoaded) return <View style={{ flex: 1, backgroundColor: '#5D4463' }} />;

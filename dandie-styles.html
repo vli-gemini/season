@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dandie — Visual Directions</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #E2DDD8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    padding: 64px 48px 80px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #AAA;
+    font-weight: 500;
+    margin-bottom: 60px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #FDFAF6;
+    border-radius: 28px;
+    padding: 44px 24px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    box-shadow: 0 2px 40px rgba(0,0,0,0.06);
+  }
+  .label { font-size: 10px; letter-spacing: 3.5px; text-transform: uppercase; color: #C0C0C0; font-weight: 600; }
+  .sub   { font-size: 11px; color: #D0D0D0; font-style: italic; margin-top: -18px; }
+</style>
+</head>
+<body>
+<h1>Dandie &mdash; 4 Visual Directions</h1>
+<div class="grid">
+
+
+<!-- ════════════════════════════════════════════════════════
+     1.  R I S O G R A P H
+     3 ink layers: YELLOW · CORAL · TEAL + grain texture
+     ════════════════════════════════════════════════════════ -->
+<div class="card">
+<svg width="120" height="158" viewBox="0 0 120 158" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- Grain texture via fractal noise multiply -->
+  <filter id="riso-grain" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="linearRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="saturate" values="0" result="gray"/>
+    <feComponentTransfer in="gray" result="dimmed">
+      <feFuncA type="linear" slope="0.32"/>
+    </feComponentTransfer>
+    <feBlend in="SourceGraphic" in2="dimmed" mode="multiply"/>
+  </filter>
+</defs>
+
+<!-- Everything gets grain -->
+<g filter="url(#riso-grain)">
+  <!-- Paper -->
+  <rect width="120" height="158" fill="#FFF6E8" rx="0"/>
+
+  <!-- ── Stem — TEAL ink ── -->
+  <path d="M 60 78 C 57 96 63 114 60 142" stroke="#2AABA0" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+  <!-- ── Sepal leaves — TEAL ── -->
+  <ellipse cx="53" cy="82" rx="5.5" ry="10" fill="#2AABA0" transform="rotate(-28 53 82)"/>
+  <ellipse cx="67" cy="84" rx="5.5" ry="10" fill="#2AABA0" transform="rotate( 28 67 84)"/>
+
+  <!-- ── CORAL ghost layer (misregistration +2,+2) ── -->
+  <!-- petals shifted by +2px x and +2px y to simulate mis-registration -->
+  <g opacity="0.45" transform="translate(2,2)">
+    <g transform="rotate(  0,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate( 45,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate( 90,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate(135,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate(180,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate(225,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate(270,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+    <g transform="rotate(315,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E83858"/></g>
+  </g>
+
+  <!-- ── YELLOW primary petal layer ── -->
+  <g transform="rotate(  0,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate( 45,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate( 90,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate(135,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate(180,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate(225,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate(270,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+  <g transform="rotate(315,60,54)"><path d="M 60 31 C 51 24.4 56.8 16.8 60 12 C 63.2 16.8 69 24.4 60 31 Z" fill="#E8C428"/></g>
+
+  <!-- ── Face — CORAL ink ── -->
+  <circle cx="60" cy="54" r="22" fill="#E83858"/>
+
+  <!-- ── YELLOW blush (second ink on coral) ── -->
+  <ellipse cx="41" cy="60" rx="7.5" ry="5" fill="#E8C428" opacity="0.55"/>
+  <ellipse cx="79" cy="60" rx="7.5" ry="5" fill="#E8C428" opacity="0.55"/>
+
+  <!-- ── Eyes — white circles + dark pupils ── -->
+  <ellipse cx="50" cy="51" rx="6" ry="5.5" fill="white"/>
+  <circle  cx="51" cy="51.8" r="3.4" fill="#180C28"/>
+  <circle  cx="52.6" cy="50.2" r="1.3" fill="white"/>
+
+  <ellipse cx="70" cy="51" rx="6" ry="5.5" fill="white"/>
+  <circle  cx="71" cy="51.8" r="3.4" fill="#180C28"/>
+  <circle  cx="72.6" cy="50.2" r="1.3" fill="white"/>
+
+  <!-- ── Smile ── -->
+  <path d="M 50 63 Q 60 71 70 63" stroke="#180C28" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+</g>
+</svg>
+<div class="label">Risograph</div>
+<div class="sub">indie zine</div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     2.  B R U S H P E N  /  S K E T C H B O O K
+     Watercolour washes + confident ink outlines
+     Slightly imperfect hand-drawn paths
+     ════════════════════════════════════════════════════════ -->
+<div class="card">
+<svg width="120" height="158" viewBox="0 0 120 158" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- Watercolour wash — blur + slight displacement -->
+  <filter id="wash">
+    <feGaussianBlur stdDeviation="2.8" result="blur"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="noise"/>
+    <feDisplacementMap in="blur" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <!-- Lighter wash for petals -->
+  <filter id="petalwash">
+    <feGaussianBlur stdDeviation="2"/>
+  </filter>
+</defs>
+
+<!-- Paper -->
+<rect width="120" height="158" fill="#FDFBF7"/>
+
+<!-- ── Watercolour washes (behind ink) ── -->
+<!-- Stem wash -->
+<path d="M 61 80 C 57 98 64 116 60 143" stroke="#8EC87A" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.35" filter="url(#wash)"/>
+
+<!-- Petal washes -->
+<g opacity="0.40" filter="url(#petalwash)">
+  <g transform="rotate(  0,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate( 36,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate( 72,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(108,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(144,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(180,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(216,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(252,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(288,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+  <g transform="rotate(324,60,54)"><path d="M 60 30 C 50 22 55 13 60 9 C 65 13 70 22 60 30 Z" fill="#F5D060"/></g>
+</g>
+
+<!-- Face wash — warm amber blush -->
+<circle cx="60" cy="54" r="23" fill="#F8C060" opacity="0.38" filter="url(#wash)"/>
+<!-- Blush washes -->
+<ellipse cx="41" cy="61" rx="10" ry="7" fill="#F4907A" opacity="0.28" filter="url(#wash)"/>
+<ellipse cx="79" cy="61" rx="10" ry="7" fill="#F4907A" opacity="0.28" filter="url(#wash)"/>
+
+<!-- ── Ink outlines (crisp, slightly varying weight) ── -->
+<!-- Stem — thick tapered brushpen -->
+<path d="M 60.5 79 C 57 97 63.5 115 59.5 142" stroke="#1C1430" stroke-width="2.8" stroke-linecap="round" fill="none"/>
+<!-- Stem veins / leaf -->
+<path d="M 59 88 C 52 83 48 78 45 76" stroke="#1C1430" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+<path d="M 61 98 C 68 93 72 88 75 87" stroke="#1C1430" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+
+<!-- Petal ink outlines — slightly wobbly paths -->
+<g stroke="#1C1430" fill="none" stroke-linecap="round">
+  <g transform="rotate(  0,60,54)"><path d="M 60 30.5 C 50.2 22.5 54.8 12.5 60 8.5 C 65.3 12.5 69.8 22.5 60 30.5 Z" stroke-width="1.8"/></g>
+  <g transform="rotate( 36,60,54)"><path d="M 60 30.5 C 50.5 23 55.2 12 60 8.5 C 64.8 12 69.5 23 60 30.5 Z" stroke-width="1.6"/></g>
+  <g transform="rotate( 72,60,54)"><path d="M 60 30.5 C 50.2 22.5 54.8 12.5 60 8.5 C 65.3 12.5 69.8 22.5 60 30.5 Z" stroke-width="1.8"/></g>
+  <g transform="rotate(108,60,54)"><path d="M 60 30.5 C 50.5 23 55.2 12 60 8.5 C 64.8 12 69.5 23 60 30.5 Z" stroke-width="1.6"/></g>
+  <g transform="rotate(144,60,54)"><path d="M 60 30.5 C 50.2 22.5 54.8 12.5 60 8.5 C 65.3 12.5 69.8 22.5 60 30.5 Z" stroke-width="1.8"/></g>
+  <g transform="rotate(180,60,54)"><path d="M 60 30.5 C 50.5 23 55.2 12 60 8.5 C 64.8 12 69.5 23 60 30.5 Z" stroke-width="1.6"/></g>
+  <g transform="rotate(216,60,54)"><path d="M 60 30.5 C 50.2 22.5 54.8 12.5 60 8.5 C 65.3 12.5 69.8 22.5 60 30.5 Z" stroke-width="1.8"/></g>
+  <g transform="rotate(252,60,54)"><path d="M 60 30.5 C 50.5 23 55.2 12 60 8.5 C 64.8 12 69.5 23 60 30.5 Z" stroke-width="1.6"/></g>
+  <g transform="rotate(288,60,54)"><path d="M 60 30.5 C 50.2 22.5 54.8 12.5 60 8.5 C 65.3 12.5 69.8 22.5 60 30.5 Z" stroke-width="1.8"/></g>
+  <g transform="rotate(324,60,54)"><path d="M 60 30.5 C 50.5 23 55.2 12 60 8.5 C 64.8 12 69.5 23 60 30.5 Z" stroke-width="1.6"/></g>
+</g>
+
+<!-- Face ink outline -->
+<circle cx="60" cy="54" r="22" stroke="#1C1430" stroke-width="2.2" fill="none"/>
+
+<!-- Crosshatch shading — right side of face -->
+<g stroke="#1C1430" stroke-width="0.8" opacity="0.18" stroke-linecap="round">
+  <line x1="69" y1="40" x2="79" y2="50"/><line x1="72" y1="40" x2="82" y2="50"/>
+  <line x1="75" y1="40" x2="82" y2="47"/><line x1="67" y1="43" x2="78" y2="54"/>
+  <line x1="70" y1="46" x2="80" y2="56"/><line x1="72" y1="50" x2="80" y2="58"/>
+  <line x1="71" y1="54" x2="78" y2="61"/><line x1="69" y1="58" x2="75" y2="64"/>
+</g>
+
+<!-- Eyes — ink -->
+<ellipse cx="49" cy="51" rx="6.5" ry="5.5" stroke="#1C1430" stroke-width="1.8" fill="white"/>
+<circle  cx="50.2" cy="51.5" r="3.5" fill="#1C1430"/>
+<circle  cx="51.8" cy="49.8" r="1.4" fill="white"/>
+<!-- tiny lash marks -->
+<line x1="43.5" y1="47.5" x2="45" y2="46" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="48"   y1="46"   x2="49" y2="44" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="53"   y1="46"   x2="53.5" y2="44" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+
+<ellipse cx="71" cy="51" rx="6.5" ry="5.5" stroke="#1C1430" stroke-width="1.8" fill="white"/>
+<circle  cx="72.2" cy="51.5" r="3.5" fill="#1C1430"/>
+<circle  cx="73.8" cy="49.8" r="1.4" fill="white"/>
+<line x1="65.5" y1="47.5" x2="67" y2="46" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="70"   y1="46"   x2="71" y2="44" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+<line x1="75"   y1="46"   x2="75.5" y2="44" stroke="#1C1430" stroke-width="1.2" stroke-linecap="round"/>
+
+<!-- Brows — brushpen strokes -->
+<path d="M 43 44 Q 49 41.5 55 43.5" stroke="#1C1430" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M 65 43.5 Q 71 41.5 77 44" stroke="#1C1430" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+
+<!-- Smile — single confident brushstroke -->
+<path d="M 48 64 Q 60 73.5 72 64" stroke="#1C1430" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+</svg>
+<div class="label">Brushpen</div>
+<div class="sub">sketchbook</div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     3.  F L A T  G R A P H I C  /  E D I T O R I A L
+     Bold outlines · 2 colours only · oversized head
+     Graphic-design confident — no gradients, no softness
+     ════════════════════════════════════════════════════════ -->
+<div class="card" style="background:#F5F0E8;">
+<svg width="120" height="158" viewBox="0 0 120 158" xmlns="http://www.w3.org/2000/svg">
+
+<!-- BG -->
+<rect width="120" height="158" fill="#F5F0E8"/>
+
+<!-- ── Very thin stem — editorial restraint ── -->
+<path d="M 60 83 C 57 102 63 120 60 145" stroke="#1D1838" stroke-width="2" stroke-linecap="round" fill="none"/>
+<!-- One small leaf nub -->
+<path d="M 59 100 C 50 95 44 90 42 87 C 46 90 52 94 59 100 Z" fill="#1D1838"/>
+
+<!-- ── 6 wide graphic petals (bold, simple ellipses — not teardrops) ── -->
+<g stroke="#1D1838" stroke-width="3" fill="#F4C430">
+  <g transform="rotate(  0,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+  <g transform="rotate( 60,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+  <g transform="rotate(120,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+  <g transform="rotate(180,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+  <g transform="rotate(240,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+  <g transform="rotate(300,60,52)"><ellipse cx="60" cy="27" rx="9"   ry="13"/></g>
+</g>
+
+<!-- ── Large bold face ── -->
+<circle cx="60" cy="52" r="26" fill="#F4C430" stroke="#1D1838" stroke-width="3"/>
+
+<!-- ── Eyes — just two dark filled circles, no whites ── -->
+<!-- They sit inside the yellow face — graphic, confident -->
+<circle cx="49" cy="49" r="5.5" fill="#1D1838"/>
+<circle cx="71" cy="49" r="5.5" fill="#1D1838"/>
+<!-- Single white dot highlight — the one decoration allowed -->
+<circle cx="51" cy="47" r="1.8" fill="white"/>
+<circle cx="73" cy="47" r="1.8" fill="white"/>
+
+<!-- ── Mouth — single thick arc ── -->
+<path d="M 48 63 Q 60 74 72 63" stroke="#1D1838" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+<!-- ── Tiny brow marks — bold horizontal dashes ── -->
+<line x1="45" y1="43" x2="53" y2="43" stroke="#1D1838" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="67" y1="43" x2="75" y2="43" stroke="#1D1838" stroke-width="2.5" stroke-linecap="round"/>
+</svg>
+<div class="label">Editorial</div>
+<div class="sub">flat graphic</div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════
+     4.  G O U A C H E  /  P A I N T E R L Y
+     Soft blurry edges · warm palette · organic layers
+     Multiple overlapping shapes = painted depth
+     ════════════════════════════════════════════════════════ -->
+<div class="card">
+<svg width="120" height="158" viewBox="0 0 120 158" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <!-- Paper texture -->
+  <filter id="gesso" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" result="noise"/>
+    <feColorMatrix in="noise" type="saturate" values="0" result="gray"/>
+    <feComponentTransfer in="gray" result="light">
+      <feFuncA type="linear" slope="0.12"/>
+    </feComponentTransfer>
+    <feBlend in="SourceGraphic" in2="light" mode="multiply"/>
+  </filter>
+  <!-- Soft blur for painterly edges -->
+  <filter id="soft">
+    <feGaussianBlur stdDeviation="2.2"/>
+  </filter>
+  <filter id="softer">
+    <feGaussianBlur stdDeviation="3.5"/>
+  </filter>
+  <filter id="softest">
+    <feGaussianBlur stdDeviation="5"/>
+  </filter>
+</defs>
+
+<g filter="url(#gesso)">
+<!-- Warm paper -->
+<rect width="120" height="158" fill="#FBF6EE"/>
+
+<!-- ── Stem — layered brushstrokes ── -->
+<!-- Shadow stroke -->
+<path d="M 61 81 C 58 99 64 117 61 143" stroke="#6A9E60" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.3" filter="url(#soft)"/>
+<!-- Main stroke -->
+<path d="M 60 80 C 57 98 63 116 60 142" stroke="#7ABE6E" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.85"/>
+<!-- Highlight stroke -->
+<path d="M 60 82 C 58 96 62 112 60 136" stroke="#A0D890" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+
+<!-- ── Petal layer 1: shadow (behind, soft) ── -->
+<g opacity="0.35" filter="url(#softer)">
+  <g transform="rotate(  0,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate( 36,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate( 72,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(108,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(144,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(180,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(216,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(252,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(288,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+  <g transform="rotate(324,60,53)"><path d="M 60 29 C 50 21 55 11 60 7 C 65 11 70 21 60 29 Z" fill="#D4A030"/></g>
+</g>
+
+<!-- ── Petal layer 2: main colour (slightly soft) ── -->
+<g opacity="0.90" filter="url(#soft)">
+  <g transform="rotate(  0,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#F0C840"/></g>
+  <g transform="rotate( 36,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#EEC038"/></g>
+  <g transform="rotate( 72,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#F0C840"/></g>
+  <g transform="rotate(108,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#EEC038"/></g>
+  <g transform="rotate(144,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#F0C840"/></g>
+  <g transform="rotate(180,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#EEC038"/></g>
+  <g transform="rotate(216,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#F0C840"/></g>
+  <g transform="rotate(252,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#EEC038"/></g>
+  <g transform="rotate(288,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#F0C840"/></g>
+  <g transform="rotate(324,60,53)"><path d="M 60 29 C 50 21 55.5 11.5 60 7 C 64.5 11.5 70 21 60 29 Z" fill="#EEC038"/></g>
+</g>
+
+<!-- ── Face — layered circles for painted depth ── -->
+<!-- Warm under-colour (shadow) -->
+<circle cx="61" cy="55" r="24" fill="#E89040" opacity="0.40" filter="url(#softer)"/>
+<!-- Main face colour -->
+<circle cx="60" cy="53" r="22" fill="#F4B848" opacity="0.88" filter="url(#soft)"/>
+<!-- Highlight — top left -->
+<ellipse cx="52" cy="44" rx="10" ry="8" fill="#FAD878" opacity="0.55" filter="url(#soft)"/>
+<!-- Warm cheek tint -->
+<ellipse cx="42" cy="61" rx="10" ry="7" fill="#E87858" opacity="0.28" filter="url(#softer)"/>
+<ellipse cx="78" cy="61" rx="10" ry="7" fill="#E87858" opacity="0.28" filter="url(#softer)"/>
+
+<!-- ── Eyes — painted, slightly imperfect ── -->
+<!-- Left eye -->
+<ellipse cx="49" cy="50" rx="7" ry="6.5" fill="white" opacity="0.90" filter="url(#soft)"/>
+<circle  cx="50" cy="51" r="4.5" fill="#2A1840" opacity="0.88"/>
+<circle  cx="50" cy="50.5" r="4" fill="#180C30" opacity="0.75"/>
+<circle  cx="51.8" cy="48.5" r="1.8" fill="white" opacity="0.95"/>
+<circle  cx="49.5" cy="52.5" r="0.9" fill="rgba(255,255,255,0.5)"/>
+<!-- Right eye -->
+<ellipse cx="71" cy="50" rx="7" ry="6.5" fill="white" opacity="0.90" filter="url(#soft)"/>
+<circle  cx="72" cy="51" r="4.5" fill="#2A1840" opacity="0.88"/>
+<circle  cx="72" cy="50.5" r="4" fill="#180C30" opacity="0.75"/>
+<circle  cx="73.8" cy="48.5" r="1.8" fill="white" opacity="0.95"/>
+<circle  cx="71.5" cy="52.5" r="0.9" fill="rgba(255,255,255,0.5)"/>
+
+<!-- ── Brows — gestural painted marks ── -->
+<path d="M 43 43.5 Q 49 41 55 43" stroke="#2A1840" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55" filter="url(#soft)"/>
+<path d="M 65 43 Q 71 41 77 43.5" stroke="#2A1840" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.55" filter="url(#soft)"/>
+
+<!-- ── Smile — soft painted curve ── -->
+<path d="M 49 63 Q 60 72.5 71 63" stroke="#C06030" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.70" filter="url(#soft)"/>
+
+</g>
+</svg>
+<div class="label">Gouache</div>
+<div class="sub">painterly</div>
+</div>
+
+
+</div><!-- /grid -->
+</body>
+</html>

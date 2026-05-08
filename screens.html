@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Season — Screen Gallery</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0b0c10;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  min-height: 100vh;
+  padding: 48px 40px 80px;
+  color: #fff;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 20px;
+}
+
+.header-left h1 {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: #fff;
+}
+
+.header-left p {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#server-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.4px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #555;
+  transition: background 0.4s;
+}
+.status-dot.online  { background: #4ade80; box-shadow: 0 0 6px #4ade8088; }
+.status-dot.offline { background: #f87171; }
+
+button {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  padding: 6px 14px;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.2s, color 0.2s;
+}
+button:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+.hint {
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+  font-style: italic;
+}
+.hint code {
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-style: normal;
+  color: rgba(255,255,255,0.35);
+}
+
+/* ── Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 32px 28px;
+}
+
+/* ── Screen card ── */
+.screen-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.screen-card:hover .phone-shell {
+  border-color: rgba(255,255,255,0.2);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+}
+
+/* ── Phone shell ── */
+.phone-shell {
+  position: relative;
+  width: 196px;
+  background: #1c1c1e;
+  border-radius: 42px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
+  padding: 14px 12px 18px;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+/* Dynamic island */
+.dynamic-island {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 84px;
+  height: 26px;
+  background: #0b0c10;
+  border-radius: 20px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Viewport wrapper — clips the scaled iframe to the right visible area */
+.phone-viewport {
+  width: 172px;          /* 390 × 0.441 */
+  height: 374px;         /* 848 × 0.441 */
+  overflow: hidden;
+  border-radius: 30px;
+  position: relative;
+  background: #000;
+}
+
+.phone-viewport iframe {
+  width: 390px;
+  height: 848px;
+  border: none;
+  transform: scale(0.441);
+  transform-origin: top left;
+  pointer-events: none;     /* gallery mode — no interaction */
+}
+
+/* Home bar */
+.home-bar {
+  width: 96px;
+  height: 4px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 3px;
+  margin: 10px auto 0;
+}
+
+/* ── Label ── */
+.screen-label {
+  text-align: center;
+}
+
+.screen-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.75);
+  display: block;
+  letter-spacing: -0.1px;
+}
+
+.screen-route {
+  font-size: 10px;
+  color: rgba(255,255,255,0.25);
+  font-family: 'SF Mono', 'Fira Mono', monospace;
+  margin-top: 3px;
+  display: block;
+  letter-spacing: 0.3px;
+}
+
+.reload-btn {
+  background: none;
+  border: none;
+  padding: 2px 6px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+  cursor: pointer;
+  border-radius: 4px;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+.reload-btn:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.5);
+}
+
+/* ── Group header ── */
+.group-header {
+  grid-column: 1 / -1;
+  margin-top: 20px;
+  margin-bottom: -8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.group-header:first-child { margin-top: 0; }
+.group-header span {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+}
+.group-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+
+/* ── Overlay shown when server is offline ── */
+.offline-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  background: rgba(11,12,16,0.85);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  letter-spacing: 0.5px;
+  z-index: 20;
+}
+body.server-offline .offline-overlay { display: flex; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <h1>Season — Screen Gallery</h1>
+    <p id="screen-count">— screens &middot; live from Expo web &middot; updates as you build</p>
+  </div>
+  <div class="header-right">
+    <span class="hint">run <code>npx expo start --web</code> first</span>
+    <div id="server-status">
+      <span class="status-dot" id="dot"></span>
+      <span id="status-text">checking…</span>
+    </div>
+    <button onclick="reloadAll()">Reload All</button>
+  </div>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const BASE = 'http://localhost:8081';
+
+const SCREENS = [
+  // ── Splash ──
+  { group: 'Splash',         name: 'Splash',                    route: '/?pause=1'                          },
+
+  // ── Onboarding (3 slides) ──
+  { group: 'Onboarding',     name: 'Onboarding · Slide 1',      route: '/onboarding?slide=0'                },
+  { group: 'Onboarding',     name: 'Onboarding · Slide 2',      route: '/onboarding?slide=1'                },
+  { group: 'Onboarding',     name: 'Onboarding · Slide 3',      route: '/onboarding?slide=2'                },
+
+  // ── Auth ──
+  { group: 'Auth',           name: 'Auth',                       route: '/auth'                              },
+
+  // ── Waitlist ──
+  { group: 'Waitlist',       name: 'Waitlist',                   route: '/waitlist'                          },
+
+  // ── Quiz (8 questions) ──
+  { group: 'Quiz',           name: 'Quiz · Q1 Stage',            route: '/quiz/1'                            },
+  { group: 'Quiz',           name: 'Quiz · Q2 Niche',            route: '/quiz/2'                            },
+  { group: 'Quiz',           name: 'Quiz · Q3 Struggle',         route: '/quiz/3'                            },
+  { group: 'Quiz',           name: 'Quiz · Q4 Need',             route: '/quiz/4'                            },
+  { group: 'Quiz',           name: 'Quiz · Q5 Style',            route: '/quiz/5'                            },
+  { group: 'Quiz',           name: 'Quiz · Q6 Region',           route: '/quiz/6'                            },
+  { group: 'Quiz',           name: 'Quiz · Q7 Platforms',        route: '/quiz/7'                            },
+  { group: 'Quiz',           name: 'Quiz · Q8 Verify',           route: '/quiz/8'                            },
+
+  // ── Match Reveal ──
+  { group: 'Match Reveal',   name: 'Match Reveal',               route: '/match'                             },
+
+  // ── Core screens ──
+  { group: 'Home',           name: 'Home',                       route: '/home'                              },
+  { group: 'DM List',        name: 'DM List',                    route: '/dms'                               },
+  { group: 'DM',             name: 'DM',                         route: '/dm'                                },
+  { group: 'Member Profile', name: 'Member Profile',             route: '/member'                            },
+  { group: 'Group Settings', name: 'Group Settings',             route: '/group'                             },
+  { group: 'Profile',        name: 'Profile',                    route: '/profile'                           },
+
+  // ── Season Wrap (5 continued + 2 non-continued pages) ──
+  { group: 'Season Wrap',    name: 'Season Wrap · P1',           route: '/season-wrap?page=0'                },
+  { group: 'Season Wrap',    name: 'Season Wrap · P2',           route: '/season-wrap?page=1'                },
+  { group: 'Season Wrap',    name: 'Season Wrap · P3',           route: '/season-wrap?page=2'                },
+  { group: 'Season Wrap',    name: 'Season Wrap · P4',           route: '/season-wrap?page=3'                },
+  { group: 'Season Wrap',    name: 'Season Wrap · P5',           route: '/season-wrap?page=4'                },
+
+  // ── Season Ending (8 view states) ──
+  { group: 'Season Ending',  name: 'Season Ending · Main',       route: '/season-ending?view=main'           },
+  { group: 'Season Ending',  name: 'Season Ending · Confirmed',  route: '/season-ending?view=confirmed'      },
+  { group: 'Season Ending',  name: 'Season Ending · Review',     route: '/season-ending?view=review-prefs'   },
+  { group: 'Season Ending',  name: 'Season Ending · Edit Prefs', route: '/season-ending?view=edit-prefs'     },
+  { group: 'Season Ending',  name: 'Season Ending · More Qs',   route: '/season-ending?view=more-questions'  },
+  { group: 'Season Ending',  name: 'Season Ending · Opt-out',    route: '/season-ending?view=optout-reason'  },
+  { group: 'Season Ending',  name: 'Season Ending · Confirm Out',route: '/season-ending?view=optout-confirm' },
+  { group: 'Season Ending',  name: 'Season Ending · Out Done',   route: '/season-ending?view=optout-done'    },
+];
+
+// Build the grid
+const grid = document.getElementById('grid');
+document.getElementById('screen-count').textContent =
+  `${SCREENS.length} screens · live from Expo web · updates as you build`;
+
+let lastGroup = null;
+SCREENS.forEach((s, i) => {
+  if (s.group !== lastGroup) {
+    lastGroup = s.group;
+    const hdr = document.createElement('div');
+    hdr.className = 'group-header';
+    hdr.innerHTML = `<span>${s.group}</span>`;
+    grid.appendChild(hdr);
+  }
+
+  const card = document.createElement('div');
+  card.className = 'screen-card';
+
+  card.innerHTML = `
+    <div class="phone-shell">
+      <div class="dynamic-island"></div>
+      <div class="phone-viewport" id="vp-${i}">
+        <div class="offline-overlay">expo server<br>not running</div>
+        <iframe
+          id="iframe-${i}"
+          src="${BASE}${s.route}"
+          title="${s.name}"
+          loading="lazy"
+        ></iframe>
+      </div>
+      <div class="home-bar"></div>
+    </div>
+    <div class="screen-label">
+      <span class="screen-name">${s.name}</span>
+      <span class="screen-route">${s.route}</span>
+      <button class="reload-btn" onclick="reloadOne(${i})">↺ reload</button>
+    </div>
+  `;
+
+  grid.appendChild(card);
+});
+
+// Reload helpers
+function reloadOne(i) {
+  const iframe = document.getElementById(`iframe-${i}`);
+  iframe.src = iframe.src;
+}
+
+function reloadAll() {
+  SCREENS.forEach((_, i) => reloadOne(i));
+}
+
+// Server health check — polling
+async function checkServer() {
+  const dot  = document.getElementById('dot');
+  const text = document.getElementById('status-text');
+  try {
+    const res = await fetch(`${BASE}/`, { mode: 'no-cors', cache: 'no-store' });
+    dot.className  = 'status-dot online';
+    text.textContent = 'expo running';
+    document.body.classList.remove('server-offline');
+  } catch {
+    dot.className  = 'status-dot offline';
+    text.textContent = 'server offline';
+    document.body.classList.add('server-offline');
+  }
+}
+
+checkServer();
+setInterval(checkServer, 4000);
+
+// Keyboard shortcut: R = reload all
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'r' && !e.metaKey && !e.ctrlKey) reloadAll();
+});
+</script>
+
+</body>
+</html>

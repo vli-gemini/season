@@ -1,7 +1,7 @@
-// Day 1  — cool purple / teal
-const EARLY = ['#5D4463', '#568C89'];
-// Day 30 — burnt sienna / amber
-const LATE  = ['#7A3530', '#9A6020'];
+// Day 1  — blush-peach sunrise, first light through petals
+const EARLY = ['#FFD6C0', '#F8C8D8'];
+// Day 30 — lavender dusk, soft and complete
+const LATE  = ['#D8D0F0', '#C8D8EE'];
 
 function lerpHex(from, to, t) {
   const f  = parseInt(from.slice(1), 16);

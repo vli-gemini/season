@@ -4,10 +4,11 @@ import {
   Text,
   StyleSheet,
   Animated,
-  TouchableWithoutFeedback,
+  TouchableOpacity,
   Dimensions,
+  Platform,
 } from 'react-native';
-import { LinearGradient } from '../components/Gradient';
+import { NatureBackground } from '../components/NatureBackground';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { Button } from '../components/Button';
@@ -15,26 +16,25 @@ import { Button } from '../components/Button';
 const { width } = Dimensions.get('window');
 const STORY_DURATION = 5000;
 
-const SLIDE_GRADIENTS = [
-  ['#5D4463', '#568C89'],
-  ['#5D4463', '#568C89'],
-  ['#5D4463', '#568C89'],
-];
-
+// Nature scenes per slide — replace 'scene' strings with local require() once assets are added.
+// e.g. scene: require('../../assets/nature/forest.jpg')
 const SLIDES = [
   {
     id: '1',
-    headline: 'Eight creators.\nChosen for exactly\nwhere you are.',
+    scene: 'forest',
+    headline: 'A small group of creators.\nChosen for exactly where you are.',
     cta: 'Find your people',
   },
   {
     id: '2',
+    scene: 'bloom',
     headline: 'Thirty days.\nOne season.\nMeaningful because it ends.',
     cta: 'Find your people',
   },
   {
     id: '3',
-    headline: 'Your next season starts\nwith the right people.',
+    scene: 'dandelion',
+    headline: 'Your next season starts with the right people.',
     cta: 'Find your people',
   },
 ];
@@ -65,40 +65,49 @@ function StoryProgressBars({ total, activeIndex, progressAnim }) {
 const bars = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 5,
     paddingHorizontal: contentPadding,
-    paddingTop: 56,
+    paddingTop: 60,
   },
   track: {
     flex: 1,
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'rgba(255,255,255,0.20)',
     borderRadius: 2,
     overflow: 'hidden',
   },
   fill: {
     height: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.90)',
     borderRadius: 2,
   },
 });
 
+const _slideParam = Platform.OS === 'web' && typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('slide')
+  : null;
+const previewSlide = _slideParam !== null ? parseInt(_slideParam, 10) : 0;
+const isPreview    = _slideParam !== null;
+
 export function OnboardingScreen({ navigation }) {
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(previewSlide);
+  const [paused, setPaused] = useState(false);
   const progressAnim = useRef(new Animated.Value(0)).current;
   const animationRef = useRef(null);
+  const isLastSlide = activeIndex === SLIDES.length - 1;
 
   const goTo = (index) => {
-    if (index >= SLIDES.length) {
-      navigation.replace('Quiz', { questionIndex: 0 });
-      return;
-    }
+    if (index >= SLIDES.length) return;
     if (index < 0) return;
+    if (paused && index > activeIndex) return;
+
     progressAnim.setValue(0);
+    setPaused(false);
     setActiveIndex(index);
   };
 
   useEffect(() => {
+    setPaused(false);
     progressAnim.setValue(0);
 
     animationRef.current = Animated.timing(progressAnim, {
@@ -108,7 +117,13 @@ export function OnboardingScreen({ navigation }) {
     });
 
     animationRef.current.start(({ finished }) => {
-      if (finished) goTo(activeIndex + 1);
+      if (finished) {
+        if (isLastSlide || isPreview) {
+          setPaused(true);
+        } else {
+          goTo(activeIndex + 1);
+        }
+      }
     });
 
     return () => animationRef.current?.stop();
@@ -126,64 +141,138 @@ export function OnboardingScreen({ navigation }) {
   const slide = SLIDES[activeIndex];
 
   return (
-    <TouchableWithoutFeedback onPress={handleTap}>
-      <View style={styles.container}>
-        <LinearGradient
-          colors={SLIDE_GRADIENTS[activeIndex]}
-          style={StyleSheet.absoluteFill}
+    <View style={styles.container}>
+      {/* Pre-render all backgrounds so videos are already loaded on switch */}
+      {SLIDES.map((s, i) => (
+        <NatureBackground
+          key={s.id}
+          scene={s.scene}
+          style={[StyleSheet.absoluteFill, { opacity: i === activeIndex ? 1 : 0 }]}
         />
+      ))}
 
-        <StoryProgressBars
-          total={SLIDES.length}
-          activeIndex={activeIndex}
-          progressAnim={progressAnim}
-        />
+      {/* Tap zones for prev/next — behind content, disabled when paused on last slide */}
+      <TouchableOpacity
+        style={styles.tapZoneLeft}
+        onPress={() => activeIndex === 0 ? navigation.replace('Splash') : goTo(activeIndex - 1)}
+        activeOpacity={1}
+        accessibilityLabel="Previous slide"
+        accessibilityRole="button"
+      />
+      <TouchableOpacity
+        style={styles.tapZoneRight}
+        onPress={() => goTo(activeIndex + 1)}
+        activeOpacity={1}
+        accessibilityLabel="Next slide"
+        accessibilityRole="button"
+        disabled={paused || isLastSlide}
+      />
 
-        <View style={styles.content}>
-          <Text style={styles.wordmark}>Season</Text>
-          <View style={styles.bottom}>
-            <Text style={styles.headline}>{slide.headline}</Text>
+      <StoryProgressBars
+        total={SLIDES.length}
+        activeIndex={activeIndex}
+        progressAnim={progressAnim}
+      />
+
+<View style={styles.content} pointerEvents="box-none">
+        <View style={styles.top}>
+          <Text style={styles.wordmark}>
+            Welcome to <Text style={styles.wordmarkBrand}>Season</Text>
+          </Text>
+          <Text style={styles.headline}>{slide.headline}</Text>
+        </View>
+        <View style={styles.bottom}>
+          <View style={styles.ctaWrap}>
             <Button
               label={slide.cta}
               onPress={() => navigation.replace('Quiz', { questionIndex: 0 })}
               style={styles.ctaBtn}
             />
           </View>
+
+          <TouchableOpacity
+            onPress={() => navigation.replace('Auth')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+          >
+            <Text style={styles.secondaryBtn}>I already have an account</Text>
+          </TouchableOpacity>
         </View>
       </View>
-    </TouchableWithoutFeedback>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
-  content: {
+  tapZoneLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    width: '33%',
+    zIndex: 1,
+  },
+  tapZoneRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '67%',
+    zIndex: 1,
+  },
+content: {
     flex: 1,
     paddingHorizontal: contentPadding,
-    paddingBottom: 48,
+    paddingBottom: 52,
     justifyContent: 'space-between',
-    paddingTop: 24,
+    paddingTop: 20,
+    zIndex: 2,
   },
   wordmark: {
-    fontSize: 18,
+    fontSize: 17,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
-    letterSpacing: 0.3,
+    color: '#ffffff',
+    letterSpacing: 0.5,
+    opacity: 0.8,
+  },
+  wordmarkBrand: {
+    color: '#ffffff',
+    opacity: 1,
+  },
+  top: {
+    gap: 8,
   },
   bottom: {
-    gap: 24,
+    gap: 28,
   },
   headline: {
-    fontSize: 30,
+    fontSize: 32,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
-    lineHeight: 40,
-    letterSpacing: -0.3,
+    color: '#ffffff',
+    lineHeight: 42,
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.30)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
+  },
+  ctaWrap: {
+    borderRadius: 999,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.40)',
+    backgroundColor: 'rgba(255,255,255,0.28)',
   },
   ctaBtn: {
-    borderRadius: 14,
+    borderRadius: 0,
+  },
+  secondaryBtn: {
+    textAlign: 'center',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: 'rgba(255, 255, 255, 0.70)',
+    letterSpacing: 0.1,
   },
 });

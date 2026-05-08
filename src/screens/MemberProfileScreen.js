@@ -5,10 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Switch,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
@@ -27,7 +27,9 @@ function Avatar({ user, size = 64 }) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: user.color + '33',
+          backgroundColor: user.color + '30',
+          borderWidth: 2,
+          borderColor: user.color + '55',
         },
       ]}
     >
@@ -45,13 +47,23 @@ function PlatformRow({ platform }) {
         <Ionicons
           name={platform.id === 'youtube' ? 'logo-youtube' : 'musical-notes-outline'}
           size={16}
-          color={platform.id === 'youtube' ? '#FF0000' : colors.textSecondary}
+          color={platform.id === 'youtube' ? '#FF453A' : colors.textSecondary}
         />
       </View>
       <View>
         <Text style={styles.platformLabel}>{platform.label}</Text>
         <Text style={styles.platformHandle}>{platform.username}</Text>
       </View>
+    </View>
+  );
+}
+
+function GlassSection({ children, style }) {
+  return (
+    <View style={[styles.glassSection, style]}>
+      <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.glassSectionOverlay]} />
+      {children}
     </View>
   );
 }
@@ -66,41 +78,47 @@ export function MemberProfileScreen({ navigation, route }) {
     bio: '',
   };
 
-  const [notificationsOn, setNotificationsOn] = useState(true);
   const [muted, setMuted] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <LinearGradient
         colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <Embers />
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backBtn}
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <View style={{ width: 38 }} />
+      <View style={styles.headerWrap}>
+        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{user.name.split(' ')[0]}</Text>
+          <View style={{ width: 38 }} />
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Identity */}
         <View style={styles.identity}>
-          <Avatar user={user} size={72} />
+          <Avatar user={user} size={80} />
           <Text style={styles.name}>{user.name}</Text>
           {details.handle ? <Text style={styles.handle}>{details.handle}</Text> : null}
           {details.bio ? <Text style={styles.bio}>{details.bio}</Text> : null}
         </View>
 
         {/* Stats */}
-        <View style={styles.statsRow}>
+        <GlassSection style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{details.streak}</Text>
             <Text style={styles.statLabel}>day streak</Text>
@@ -110,36 +128,29 @@ export function MemberProfileScreen({ navigation, route }) {
             <Text style={styles.statValue}>{details.madeCount}</Text>
             <Text style={styles.statLabel}>things made</Text>
           </View>
-        </View>
+        </GlassSection>
 
         {/* Platforms */}
         {details.platforms.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Where they create</Text>
-            <View style={styles.card}>
+            <GlassSection>
               {details.platforms.map((p) => (
                 <PlatformRow key={p.id} platform={p} />
               ))}
-            </View>
+            </GlassSection>
           </View>
         )}
 
         {/* DM Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
-          <View style={styles.card}>
-            <View style={styles.settingRow}>
-              <Text style={styles.settingLabel}>Notifications</Text>
-              <Switch
-                value={notificationsOn}
-                onValueChange={setNotificationsOn}
-                trackColor={{ false: colors.border, true: colors.accentWarm + '80' }}
-                thumbColor={notificationsOn ? colors.accentWarm : colors.textMuted}
-              />
-            </View>
+          <GlassSection>
             <TouchableOpacity
               style={[styles.settingRow, styles.settingRowBtn]}
               onPress={() => setMuted((m) => !m)}
+              accessibilityRole="button"
+              accessibilityLabel={muted ? 'Unmute conversation' : 'Mute conversation'}
             >
               <Text style={styles.settingLabel}>
                 {muted ? 'Unmute conversation' : 'Mute conversation'}
@@ -155,14 +166,10 @@ export function MemberProfileScreen({ navigation, route }) {
               onPress={() =>
                 Alert.alert(
                   `Block ${user.name.split(' ')[0]}?`,
-                  'They won\'t be able to send you DMs. You can unblock them from your account settings.',
+                  "You won't be able to message each other.",
                   [
                     { text: 'Cancel', style: 'cancel' },
-                    {
-                      text: 'Block',
-                      style: 'destructive',
-                      onPress: () => navigation.goBack(),
-                    },
+                    { text: 'Block', style: 'destructive', onPress: () => navigation.goBack() },
                   ]
                 )
               }
@@ -171,7 +178,7 @@ export function MemberProfileScreen({ navigation, route }) {
                 Block {user.name.split(' ')[0]}
               </Text>
             </TouchableOpacity>
-          </View>
+          </GlassSection>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -180,6 +187,14 @@ export function MemberProfileScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  headerWrap: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  headerOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -188,53 +203,69 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backBtn: { padding: 4, width: 38 },
-  scroll: { paddingBottom: 48 },
+  headerTitle: {
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
+  scroll: { paddingBottom: 56 },
   identity: {
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 28,
     paddingBottom: 28,
     paddingHorizontal: contentPadding,
   },
-  avatar: { alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  avatar: { alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   avatarText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
     color: colors.textPrimary,
   },
   name: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   handle: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   bio: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 21,
     textAlign: 'center',
+    maxWidth: 280,
   },
+
+  // Glass section
+  glassSection: {
+    overflow: 'hidden',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  glassSectionOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: contentPadding,
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 16,
+    padding: 18,
     marginBottom: 28,
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: 'PlusJakartaSans_300Light',
     color: colors.textPrimary,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,
@@ -244,56 +275,49 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     marginHorizontal: 8,
   },
   section: {
     paddingHorizontal: contentPadding,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 10,
-  },
-  card: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
   },
   platformRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
     gap: 12,
   },
   platformIcon: { width: 28, alignItems: 'center' },
   platformLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
-    marginBottom: 1,
+    color: colors.textMuted,
+    marginBottom: 2,
   },
   platformHandle: {
     fontSize: 14,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textPrimary,
   },
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   settingRowBtn: {},
   settingLabel: {

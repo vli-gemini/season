@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../components/Gradient';
 import { colors } from '../theme/colors';
@@ -28,7 +29,7 @@ const GROUP = {
 
 const MEMBERS = GROUP_MEMBERS;
 
-function Avatar({ member, size = 48 }) {
+function Avatar({ member, size = 44 }) {
   return (
     <View
       style={[
@@ -38,6 +39,8 @@ function Avatar({ member, size = 48 }) {
           height: size,
           borderRadius: size / 2,
           backgroundColor: member.color + '33',
+          borderWidth: 1.5,
+          borderColor: member.color + '55',
         },
       ]}
     >
@@ -52,10 +55,20 @@ function GroupAvatar({ size = 72 }) {
   return (
     <View style={[styles.groupAvatarWrap, { width: size, height: size, borderRadius: size / 2 }]}>
       <LinearGradient
-        colors={['#6B5FD4', '#3D2E8C']}
+        colors={['#8B7FFF', '#4A3FC8']}
         style={[StyleSheet.absoluteFill, { borderRadius: size / 2 }]}
       />
-      <Ionicons name="people" size={size * 0.44} color="rgba(255,255,255,0.85)" />
+      <Ionicons name="people" size={size * 0.44} color="rgba(255,255,255,0.92)" />
+    </View>
+  );
+}
+
+function GlassSection({ children, style }) {
+  return (
+    <View style={[styles.glassSection, style]}>
+      <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.glassSectionOverlay]} />
+      {children}
     </View>
   );
 }
@@ -68,40 +81,42 @@ export function GroupSettingsScreen({ navigation }) {
     <SafeAreaView style={styles.safe} edges={['top']}>
       <LinearGradient
         colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        start={{ x: 0.1, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
       <Embers />
 
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
-        </TouchableOpacity>
-        <View style={{ width: 38 }} />
+      <View style={styles.headerWrap}>
+        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            accessibilityLabel="Back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{GROUP.name}</Text>
+          <View style={{ width: 38 }} />
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Group identity */}
         <View style={styles.identity}>
-          <GroupAvatar size={72} />
+          <GroupAvatar size={80} />
           <Text style={styles.groupName}>{GROUP.name}</Text>
           <Text style={styles.groupMeta}>{GROUP.season} · Day {GROUP.day} of {GROUP.total}</Text>
-        </View>
-
-        {/* Progress bar */}
-        <View style={styles.progressSection}>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${(GROUP.day / GROUP.total) * 100}%` }]} />
-          </View>
-          <Text style={styles.progressLabel}>Ends {GROUP.endDate}</Text>
         </View>
 
         {/* Members */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Members</Text>
-          <View style={styles.card}>
+          <GlassSection>
             {MEMBERS.map((member, i) => (
               <TouchableOpacity
                 key={member.id}
@@ -111,23 +126,23 @@ export function GroupSettingsScreen({ navigation }) {
               >
                 <Avatar member={member} size={40} />
                 <Text style={styles.memberName}>{member.name}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                <Ionicons name="chevron-forward" size={15} color={colors.textMuted} style={{ opacity: 0.5 }} />
               </TouchableOpacity>
             ))}
-          </View>
+          </GlassSection>
         </View>
 
-        {/* Group settings */}
+        {/* Settings */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
-          <View style={styles.card}>
+          <GlassSection>
             <View style={styles.settingRow}>
               <Text style={styles.settingLabel}>Notifications</Text>
               <Switch
                 value={notificationsOn}
                 onValueChange={setNotificationsOn}
-                trackColor={{ false: colors.border, true: colors.accentWarm + '80' }}
-                thumbColor={notificationsOn ? colors.accentWarm : colors.textMuted}
+                trackColor={{ false: 'rgba(255,255,255,0.15)', true: colors.accentVibrant + '80' }}
+                thumbColor={notificationsOn ? colors.accent : colors.textMuted}
               />
             </View>
             <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
@@ -135,22 +150,22 @@ export function GroupSettingsScreen({ navigation }) {
               <Switch
                 value={showActivity}
                 onValueChange={setShowActivity}
-                trackColor={{ false: colors.border, true: colors.accentWarm + '80' }}
-                thumbColor={showActivity ? colors.accentWarm : colors.textMuted}
+                trackColor={{ false: 'rgba(255,255,255,0.15)', true: colors.accentVibrant + '80' }}
+                thumbColor={showActivity ? colors.accent : colors.textMuted}
               />
             </View>
-          </View>
+          </GlassSection>
         </View>
 
         {/* Danger */}
-        <View style={[styles.section, { paddingBottom: 40 }]}>
-          <View style={styles.card}>
+        <View style={[styles.section, { paddingBottom: 48 }]}>
+          <GlassSection>
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() =>
                 Alert.alert(
                   'Leave group?',
-                  'You\'ll lose access to the group chat. Your season progress will be recorded.',
+                  "You'll lose access to the group chat. Your season progress will be recorded.",
                   [
                     { text: 'Cancel', style: 'cancel' },
                     {
@@ -164,7 +179,7 @@ export function GroupSettingsScreen({ navigation }) {
             >
               <Text style={[styles.settingLabel, { color: colors.error }]}>Leave group</Text>
             </TouchableOpacity>
-          </View>
+          </GlassSection>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -173,6 +188,14 @@ export function GroupSettingsScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
+  headerWrap: {
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.08)',
+  },
+  headerOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -181,45 +204,54 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   backBtn: { padding: 4, width: 38 },
+  headerTitle: {
+    fontSize: 17,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: colors.textPrimary,
+    letterSpacing: -0.2,
+  },
   scroll: { paddingBottom: 48 },
-
   identity: {
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 28,
     paddingBottom: 20,
   },
   groupAvatarWrap: {
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
-    marginBottom: 14,
+    marginBottom: 16,
+    shadowColor: '#7B6FFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
   },
   groupName: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
     marginBottom: 4,
+    letterSpacing: -0.3,
   },
   groupMeta: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textMuted,
   },
-
   progressSection: {
     paddingHorizontal: contentPadding,
     marginBottom: 28,
   },
   progressTrack: {
-    height: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 2,
-    marginBottom: 6,
+    height: 3,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderRadius: 3,
+    marginBottom: 8,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.accentWarm,
-    borderRadius: 2,
+    borderRadius: 3,
   },
   progressLabel: {
     fontSize: 11,
@@ -227,25 +259,28 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'right',
   },
-
   section: {
     paddingHorizontal: contentPadding,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontSize: 11,
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: colors.textMuted,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 10,
   },
-  card: {
-    backgroundColor: colors.backgroundCard,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: colors.border,
+
+  // Glass section
+  glassSection: {
     overflow: 'hidden',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.glassBorder,
+  },
+  glassSectionOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
 
   avatar: { alignItems: 'center', justifyContent: 'center' },
@@ -256,11 +291,11 @@ const styles = StyleSheet.create({
   memberRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+    gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   memberName: {
     flex: 1,
@@ -268,15 +303,14 @@ const styles = StyleSheet.create({
     fontFamily: 'PlusJakartaSans_400Regular',
     color: colors.textPrimary,
   },
-
   settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.07)',
   },
   settingLabel: {
     fontSize: 15,
