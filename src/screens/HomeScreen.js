@@ -12,6 +12,7 @@ import {
   Alert,
   PanResponder,
   Animated,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -88,7 +89,7 @@ function Avatar({ member, size = 34 }) {
           borderRadius: size / 2,
           backgroundColor: member.color + '35',
           borderWidth: 1.5,
-          borderColor: member.color + '55',
+          borderColor: member.color + '70',
         },
       ]}
     >
@@ -137,7 +138,6 @@ function Message({ message, prevMessage, onSenderPress }) {
       accessible
       accessibilityLabel={a11yLabel}
     >
-      {/* Avatar column — other senders only */}
       {!isMe && (
         <TouchableOpacity
           style={styles.avatarCol}
@@ -151,7 +151,6 @@ function Message({ message, prevMessage, onSenderPress }) {
       )}
 
       <View style={[styles.bubbleCol, isMe && styles.bubbleColMe]}>
-        {/* Sender name + timestamp on first message of a group */}
         {!isMe && !isSameGroup && (
           <TouchableOpacity
             style={styles.senderRow}
@@ -171,7 +170,6 @@ function Message({ message, prevMessage, onSenderPress }) {
           </Text>
         </View>
 
-        {/* Timestamp for my messages, right-aligned under bubble */}
         {isMe && !isSameGroup && (
           <Text style={styles.myTime}>{message.timestamp}</Text>
         )}
@@ -223,7 +221,7 @@ function SeasonProgressHeader({ day, totalDays, onDayChange }) {
 
   return (
     <View style={styles.progressCard}>
-      <BlurView intensity={16} tint="light" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, styles.progressCardOverlay]} />
 
       <View style={styles.progressCardRow}>
@@ -234,7 +232,7 @@ function SeasonProgressHeader({ day, totalDays, onDayChange }) {
           accessibilityLabel="Previous day"
           accessibilityRole="button"
         >
-          <Ionicons name="chevron-back" size={13} color={colors.textMuted} />
+          <Ionicons name="chevron-back" size={13} color="rgba(255,255,255,0.55)" />
         </TouchableOpacity>
 
         <Animated.Text
@@ -250,7 +248,7 @@ function SeasonProgressHeader({ day, totalDays, onDayChange }) {
           accessibilityLabel="Next day"
           accessibilityRole="button"
         >
-          <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={13} color="rgba(255,255,255,0.55)" />
         </TouchableOpacity>
 
         <Text style={styles.progressCardOf}>of {totalDays}</Text>
@@ -260,7 +258,6 @@ function SeasonProgressHeader({ day, totalDays, onDayChange }) {
         </Text>
       </View>
 
-      {/* Scrubber — tap or drag to jump to any day */}
       <View
         ref={trackRef}
         style={styles.progressTrackOuter}
@@ -344,21 +341,20 @@ export function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(day, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers currentDay={day} />
 
       {/* ── Header ── */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
 
         <View style={styles.header}>
-          {/* Left: my avatar → Profile */}
           <TouchableOpacity
             style={styles.headerAvatarBtn}
             onPress={() => navigation.navigate('Profile')}
@@ -369,7 +365,6 @@ export function HomeScreen({ navigation }) {
             <Avatar member={ME} size={34} />
           </TouchableOpacity>
 
-          {/* Center: group name + context */}
           <TouchableOpacity
             style={styles.headerCenter}
             activeOpacity={0.7}
@@ -383,14 +378,13 @@ export function HomeScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          {/* Right: DMs */}
           <TouchableOpacity
             style={styles.headerIconBtn}
             onPress={() => navigation.navigate('DMList')}
             accessibilityLabel="Direct messages"
             accessibilityRole="button"
           >
-            <Ionicons name="chatbubble-ellipses-outline" size={19} color={colors.textSecondary} />
+            <Ionicons name="chatbubble-ellipses-outline" size={19} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -402,12 +396,12 @@ export function HomeScreen({ navigation }) {
           activeOpacity={0.8}
           onPress={() => navigation.navigate('SeasonEnding', { day })}
         >
-          <BlurView intensity={14} tint="light" style={StyleSheet.absoluteFill} />
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
           <View style={[StyleSheet.absoluteFill, styles.bannerOverlay, daysLeft <= 0 && styles.bannerOverlayEnded]} />
           <Ionicons
             name={daysLeft <= 0 ? 'ribbon-outline' : 'time-outline'}
             size={13}
-            color={colors.accentWarm}
+            color="rgba(255,255,255,0.80)"
           />
           <Text style={styles.countdownText}>
             {daysLeft <= 0
@@ -416,7 +410,7 @@ export function HomeScreen({ navigation }) {
               ? 'Last day — choose who you continue with'
               : `${daysLeft} days left — choose who continues with you`}
           </Text>
-          <Ionicons name="chevron-forward" size={12} color={colors.textMuted} />
+          <Ionicons name="chevron-forward" size={12} color="rgba(255,255,255,0.45)" />
         </TouchableOpacity>
       )}
 
@@ -457,7 +451,6 @@ export function HomeScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         />
 
-        {/* ── Sprig — season mascot ── */}
         <SeasonMascot
           day={day}
           totalDays={TOTAL_DAYS}
@@ -467,7 +460,7 @@ export function HomeScreen({ navigation }) {
         {/* ── Input bar ── */}
         <View style={styles.inputBarWrap}>
           <View style={styles.inputBarGlass}>
-            <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, styles.inputBarOverlay]} />
 
             <View style={styles.inputBar}>
@@ -477,12 +470,12 @@ export function HomeScreen({ navigation }) {
                 accessibilityLabel="Attach file"
                 accessibilityRole="button"
               >
-                <Ionicons name="add-circle-outline" size={22} color={colors.textMuted} />
+                <Ionicons name="add-circle-outline" size={22} color="rgba(255,255,255,0.50)" />
               </TouchableOpacity>
               <TextInput
                 style={styles.textInput}
                 placeholder="Share what you made..."
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="rgba(255,255,255,0.40)"
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -499,7 +492,7 @@ export function HomeScreen({ navigation }) {
                 <Ionicons
                   name="arrow-up"
                   size={16}
-                  color={input.trim() ? '#fff' : colors.textMuted}
+                  color={input.trim() ? '#fff' : 'rgba(255,255,255,0.45)'}
                 />
               </TouchableOpacity>
             </View>
@@ -513,7 +506,14 @@ export function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#000',
+  },
+  bgImage: {
+    width: '100%',
+    height: '100%',
+  },
+  bgOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.52)',
   },
   flex: { flex: 1 },
 
@@ -521,10 +521,10 @@ const styles = StyleSheet.create({
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -544,13 +544,13 @@ const styles = StyleSheet.create({
   groupName: {
     fontSize: 16,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.2,
   },
   groupSub: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.55)',
     marginTop: 1,
     letterSpacing: 0.1,
   },
@@ -558,9 +558,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
 
   // ── Season ending banner ──
@@ -587,22 +587,22 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(176, 140, 220, 0.20)',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   countdownBannerEnded: {
-    borderColor: 'rgba(100, 160, 180, 0.20)',
+    borderColor: 'rgba(255,255,255,0.22)',
   },
   bannerOverlay: {
-    backgroundColor: 'rgba(184, 158, 200, 0.10)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   bannerOverlayEnded: {
-    backgroundColor: 'rgba(138, 173, 160, 0.10)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   countdownText: {
     flex: 1,
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
     lineHeight: 17,
   },
 
@@ -618,14 +618,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 16,
     paddingTop: 13,
     paddingBottom: 14,
     marginBottom: 20,
   },
   progressCardOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
   },
   progressCardRow: {
     flexDirection: 'row',
@@ -642,23 +642,22 @@ const styles = StyleSheet.create({
   progressCardDay: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     minWidth: 52,
     textAlign: 'center',
   },
   progressCardOf: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.55)',
     marginLeft: 2,
   },
   progressCardSpacer: { flex: 1 },
   progressCardRight: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.55)',
   },
-  // Outer wrapper carries the pan responder and allows thumb to overflow
   progressTrackOuter: {
     height: 18,
     justifyContent: 'center',
@@ -666,7 +665,7 @@ const styles = StyleSheet.create({
   progressTrack: {
     height: 5,
     borderRadius: 5,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.20)',
     overflow: 'hidden',
   },
   progressFill: {
@@ -678,14 +677,14 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255,255,255,0.95)',
     top: 2,
     marginLeft: -7,
     borderWidth: 2,
-    borderColor: colors.accent,
+    borderColor: 'rgba(255,255,255,0.70)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.25,
     shadowRadius: 3,
     elevation: 3,
   },
@@ -700,12 +699,12 @@ const styles = StyleSheet.create({
   dateSepLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   dateSepText: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.50)',
     letterSpacing: 0.5,
   },
 
@@ -754,12 +753,12 @@ const styles = StyleSheet.create({
   msgTime: {
     fontSize: 10,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.50)',
   },
   myTime: {
     fontSize: 10,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.50)',
     marginTop: 3,
     marginRight: 2,
   },
@@ -769,21 +768,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   bubbleMe: {
-    backgroundColor: colors.bubbleSelf,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     borderBottomRightRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.30)',
   },
   bubbleOther: {
-    backgroundColor: colors.bubbleOther,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderBottomLeftRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   bubbleText: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 22,
   },
   bubbleTextMe: {
-    color: colors.textPrimary,
+    color: '#fff',
   },
   systemMsg: {
     alignItems: 'center',
@@ -792,8 +795,8 @@ const styles = StyleSheet.create({
   systemText: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
-    backgroundColor: colors.bubbleSystem,
+    color: 'rgba(255,255,255,0.55)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -818,10 +821,10 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   inputBarOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   inputBar: {
     flexDirection: 'row',
@@ -844,15 +847,15 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   sendBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 1,

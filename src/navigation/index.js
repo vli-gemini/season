@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 import { SplashScreen } from '../screens/SplashScreen';
 import { OnboardingScreen } from '../screens/OnboardingScreen';
-import { AuthScreen } from '../screens/AuthScreen';
+import { EmailScreen } from '../screens/EmailScreen';
 import { WaitlistScreen } from '../screens/WaitlistScreen';
 import { QuizScreen } from '../screens/QuizScreen';
 import { HomeScreen } from '../screens/HomeScreen';
@@ -16,6 +16,7 @@ import { SeasonEndingScreen } from '../screens/SeasonEndingScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { SeasonWrapScreen } from '../screens/SeasonWrapScreen';
 import { MatchRevealScreen } from '../screens/MatchRevealScreen';
+import { ConfirmationScreen } from '../screens/ConfirmationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,8 +32,9 @@ const linking = {
         stringify: { questionIndex: (n) => String((n ?? 0) + 1) },
       },
       Waitlist:    '/waitlist',
+      Confirmation: '/confirmation',
       MatchReveal: '/match',
-      Auth:        '/auth',
+      Email:       '/email',
       Home:        '/home',
       GroupSettings: '/group',
       DMList:      '/dms',
@@ -56,8 +58,9 @@ export function Navigation() {
         <Stack.Screen name="Onboarding"   component={OnboardingScreen} options={{ gestureEnabled: false }} />
         <Stack.Screen name="Quiz"         component={QuizScreen}        options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="Waitlist"     component={WaitlistScreen} />
+        <Stack.Screen name="Confirmation" component={ConfirmationScreen} options={{ animation: 'fade' }} />
         <Stack.Screen name="MatchReveal"  component={MatchRevealScreen} options={{ animation: 'fade' }} />
-        <Stack.Screen name="Auth"         component={AuthScreen}        options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Email"        component={EmailScreen}       options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Home"        component={HomeScreen} />
         <Stack.Screen name="GroupSettings" component={GroupSettingsScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="DMList"      component={DMListScreen}     options={{ animation: 'slide_from_right' }} />

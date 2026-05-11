@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -14,10 +15,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { LinearGradient } from '../components/Gradient';
-import { getSeasonGradient } from '../theme/seasonGradient';
-import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
+import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
+import { getSeasonGradient } from '../theme/seasonGradient';
 
 const DEMO_ENROLLMENT = 'enrolled';
 const DEMO_SELECTED_IDS = new Set(['1', '3']);
@@ -55,7 +56,7 @@ function PlatformRow({ platform }) {
         <Ionicons
           name={platform.id === 'youtube' ? 'logo-youtube' : 'musical-notes-outline'}
           size={16}
-          color={platform.id === 'youtube' ? '#FF453A' : colors.textSecondary}
+          color={platform.id === 'youtube' ? '#FF6B6B' : 'rgba(255,255,255,0.55)'}
         />
       </View>
       <View>
@@ -69,7 +70,7 @@ function PlatformRow({ platform }) {
 function GlassSection({ children, style }) {
   return (
     <View style={[styles.glassSection, style]}>
-      <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, styles.glassSectionOverlay]} />
       {children}
     </View>
@@ -88,17 +89,17 @@ export function ProfileScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
         <View style={styles.header}>
           <TouchableOpacity
@@ -107,7 +108,7 @@ export function ProfileScreen({ navigation }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Profile</Text>
           <TouchableOpacity
@@ -116,7 +117,7 @@ export function ProfileScreen({ navigation }) {
             accessibilityLabel="Group settings"
             accessibilityRole="button"
           >
-            <Ionicons name="people-outline" size={20} color={colors.textSecondary} />
+            <Ionicons name="people-outline" size={20} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
         </View>
       </View>
@@ -126,7 +127,7 @@ export function ProfileScreen({ navigation }) {
         <View style={styles.identity}>
           <View style={styles.avatarLargeWrap}>
             <LinearGradient
-              colors={['rgba(168,158,255,0.25)', 'rgba(123,111,255,0.10)']}
+              colors={['rgba(168,158,255,0.35)', 'rgba(123,111,255,0.15)']}
               style={StyleSheet.absoluteFill}
             />
             <Text style={styles.avatarInitials}>YN</Text>
@@ -154,7 +155,7 @@ export function ProfileScreen({ navigation }) {
             </View>
             <View style={styles.seasonProgressTrack}>
               <LinearGradient
-                colors={colors.gradientAccent}
+                colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[
@@ -189,7 +190,7 @@ export function ProfileScreen({ navigation }) {
                   onPress={() => navigation.navigate('SeasonEnding')}
                 >
                   <Text style={styles.actionLabel}>Manage enrollment preferences</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                  <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.45)" />
                 </TouchableOpacity>
               </>
             ) : (
@@ -224,7 +225,7 @@ export function ProfileScreen({ navigation }) {
                   onPress={() => navigation.navigate('SeasonEnding')}
                 >
                   <Text style={styles.actionLabel}>Update who you'd like to continue with</Text>
-                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                  <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.45)" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.actionRow, { borderBottomWidth: 0 }]}
@@ -259,7 +260,7 @@ export function ProfileScreen({ navigation }) {
               }
             >
               <View style={styles.addPlatformIcon}>
-                <Ionicons name="add" size={14} color={colors.textSecondary} />
+                <Ionicons name="add" size={14} color="rgba(255,255,255,0.70)" />
               </View>
               <Text style={styles.addPlatformText}>Add platform</Text>
             </TouchableOpacity>
@@ -279,7 +280,7 @@ export function ProfileScreen({ navigation }) {
               }
             >
               <Text style={styles.actionLabel}>Edit profile</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.45)" />
             </TouchableOpacity>
             <View style={styles.actionRow}>
               <Text style={styles.actionLabel}>Notifications</Text>
@@ -287,7 +288,7 @@ export function ProfileScreen({ navigation }) {
                 value={notificationsOn}
                 onValueChange={setNotificationsOn}
                 trackColor={{ false: 'rgba(255,255,255,0.15)', true: colors.accentVibrant + '80' }}
-                thumbColor={notificationsOn ? colors.accent : colors.textMuted}
+                thumbColor={notificationsOn ? colors.accent : 'rgba(255,255,255,0.55)'}
               />
             </View>
             <TouchableOpacity
@@ -316,15 +317,17 @@ export function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#000',
   },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -338,7 +341,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.2,
   },
   scroll: {
@@ -354,13 +357,13 @@ const styles = StyleSheet.create({
     borderRadius: 48,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: 'rgba(168,158,255,0.40)',
+    borderColor: 'rgba(168,158,255,0.45)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,
     shadowColor: '#7B6FFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.30,
     shadowRadius: 16,
   },
   avatarInitials: {
@@ -371,14 +374,14 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 4,
     letterSpacing: -0.2,
   },
   handle: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
 
   // Glass section
@@ -386,10 +389,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   glassSectionOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
 
   statsRow: {
@@ -405,19 +408,19 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 3,
   },
   statLabel: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
     letterSpacing: 0.1,
   },
   statDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     marginHorizontal: 8,
   },
   section: {
@@ -427,7 +430,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -443,16 +446,16 @@ const styles = StyleSheet.create({
   seasonName: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   seasonDay: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
   seasonProgressTrack: {
     height: 3,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 3,
     marginBottom: 10,
     overflow: 'hidden',
@@ -464,14 +467,14 @@ const styles = StyleSheet.create({
   seasonEnds: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
   platformRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
     gap: 12,
   },
   platformIcon: {
@@ -481,13 +484,13 @@ const styles = StyleSheet.create({
   platformLabel: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     marginBottom: 2,
   },
   platformHandle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   addPlatformBtn: {
     flexDirection: 'row',
@@ -499,16 +502,16 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   addPlatformText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.60)',
   },
   actionRow: {
     flexDirection: 'row',
@@ -517,12 +520,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   actionLabel: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     flex: 1,
     marginRight: 8,
   },
@@ -532,7 +535,7 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   enrollmentDot: {
     width: 8,
@@ -543,13 +546,13 @@ const styles = StyleSheet.create({
   enrollmentStatusLabel: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 6,
   },
   enrollmentStatusSub: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
   enrollmentAvatarRow: {
     flexDirection: 'row',
@@ -568,11 +571,11 @@ const styles = StyleSheet.create({
   enrollmentAvatarText: {
     fontSize: 9,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   enrollmentAvatarLabel: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
 });

@@ -9,7 +9,6 @@ export const PLATFORM_META = {
   pinterest: { label: 'Pinterest',   icon: '⊕', placeholder: 'username' },
   snapchat:  { label: 'Snapchat',    icon: '⬡', placeholder: 'username' },
   facebook:  { label: 'Facebook',    icon: 'ƒ', placeholder: 'profile name or URL' },
-  patreon:   { label: 'Patreon',     icon: '◐', placeholder: 'patreon.com/...' },
   threads:   { label: 'Threads',     icon: '⊛', placeholder: 'username' },
   rednote:   { label: 'RedNote',     icon: '◆', placeholder: 'username' },
   spotify:   { label: 'Spotify',     icon: '◎', placeholder: 'artist or show URL' },
@@ -150,7 +149,7 @@ export const quizQuestions = [
     matchKey: 'handles',
     matchWeight: 'operational',
     type: 'verify_platforms',
-    question: 'Verify your creator profile.',
-    subtitle: 'Connect at least one account so we know you\'re an active creator. We\'ll never post on your behalf.',
+    question: 'Where do people find you?',
+    subtitle: 'Add at least one handle you most commonly use so we can find you. The more you add, the more accurate your match.',
   },
 ];

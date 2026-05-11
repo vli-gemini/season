@@ -186,6 +186,9 @@ export function OnboardingScreen({ navigation }) {
             <Button
               label={slide.cta}
               onPress={() => navigation.replace('Quiz', { questionIndex: 0 })}
+              variant="solid"
+              color="transparent"
+              textColor="#ffffff"
               style={styles.ctaBtn}
             />
           </View>
@@ -263,7 +266,7 @@ content: {
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.40)',
-    backgroundColor: 'rgba(255,255,255,0.28)',
+    backgroundColor: 'rgba(255,255,255,0.40)',
   },
   ctaBtn: {
     borderRadius: 0,

@@ -25,7 +25,27 @@ import { quizQuestions, PLATFORM_META } from '../data/quizQuestions';
 import { SOCIAL_ICONS } from '../data/socialIcons';
 
 
-function PlatformIcon({ id, size }) {
+const PLATFORM_IMAGE_OVERRIDES = {
+  youtube:   { source: require('../../assets/social-icons-svg/youtube.png'),   resizeMode: 'contain' },
+  tiktok:    { source: require('../../assets/social-icons-svg/tiktok.avif'),   resizeMode: 'cover' },
+  instagram: { source: require('../../assets/social-icons-svg/Instagram.png'), resizeMode: 'cover' },
+  twitter:   { source: require('../../assets/social-icons-svg/x.png'),         resizeMode: 'cover' },
+  facebook:  { source: require('../../assets/social-icons-svg/facebook.png'),  resizeMode: 'cover' },
+  linkedin:  { source: require('../../assets/social-icons-svg/linkedin.png'),  resizeMode: 'cover' },
+  pinterest: { source: require('../../assets/social-icons-svg/pinterest.png'), resizeMode: 'cover' },
+  rednote:   { source: require('../../assets/social-icons-svg/rednote.png'),   resizeMode: 'cover' },
+  snapchat:  { source: require('../../assets/social-icons-svg/snapchat.jpg'),  resizeMode: 'cover' },
+  twitch:    { source: require('../../assets/social-icons-svg/twitch.png'),   resizeMode: 'cover' },
+  spotify:   { source: require('../../assets/social-icons-svg/spotify.png'),   resizeMode: 'cover' },
+  substack:  { source: require('../../assets/social-icons-svg/substack.png'),  resizeMode: 'cover' },
+  threads:   { source: require('../../assets/social-icons-svg/threads.png'),   resizeMode: 'cover' },
+};
+
+function PlatformIcon({ id, size = 38 }) {
+  const override = PLATFORM_IMAGE_OVERRIDES[id];
+  if (override) {
+    return <Image source={override.source} style={{ width: size, height: size }} resizeMode={override.resizeMode} />;
+  }
   const entry = SOCIAL_ICONS[id];
   if (!entry) return <Ionicons name="globe-outline" size={size} color="#fff" />;
   return <SvgXml xml={entry.svg} width={size} height={size} />;
@@ -66,9 +86,7 @@ export function QuizScreen({ navigation, route }) {
 
   const [selected, setSelected] = useState([]);
   const [handles, setHandles] = useState({});
-  const [verified, setVerified] = useState({});
-  const [connectingPlatform, setConnectingPlatform] = useState(null);
-  const [connectInput, setConnectInput] = useState('');
+  const [verified, setVerified] = useState(answers.handles ?? {});
   const [otherText, setOtherText] = useState('');
   const [tzModalOpen, setTzModalOpen] = useState(false);
   const otherSelected = selected.includes('other');
@@ -103,7 +121,7 @@ export function QuizScreen({ navigation, route }) {
     } else if (isMoreQuestions) {
       navigation.navigate('Home');
     } else {
-      navigation.replace('Auth', { answers: updatedAnswers });
+      navigation.replace('Email', { answers: updatedAnswers });
     }
   };
 
@@ -187,56 +205,41 @@ export function QuizScreen({ navigation, route }) {
           {/* Options only */}
           <View style={styles.options}>
             {isVerifyPlatforms ? (
-              <View style={styles.connectList}>
-                {activePlatforms.map((platform) => {
-                  const username = verified[platform.id];
-                  const isConnected = typeof username === 'string' && username.length > 0;
-                  return (
-                    <TouchableOpacity
-                      key={platform.id}
-                      style={[styles.connectRow, isConnected && styles.connectRowActive]}
-                      onPress={() => {
-                        setConnectInput(isConnected ? username : '');
-                        setConnectingPlatform(platform.id);
-                      }}
-                      activeOpacity={0.75}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${isConnected ? 'Change' : 'Connect'} ${platform.label}`}
-                    >
-                      <BlurView intensity={60} tint="light" style={StyleSheet.absoluteFill} />
-                      <View style={[StyleSheet.absoluteFill, styles.connectOverlay, isConnected && styles.connectOverlaySelected]} />
-                      {isConnected && (
-                        <LinearGradient
-                          colors={['rgba(0,0,0,0.06)', 'rgba(0,0,0,0)']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 0, y: 1 }}
-                          style={styles.connectInsetShadow}
-                        />
-                      )}
-                      <View style={[
-                        styles.connectIconWrap,
-                        isConnected && styles.connectIconActive,
-                        { backgroundColor: `${SOCIAL_ICONS[platform.id]?.color ?? '#fff'}22` },
-                      ]}>
-                        <PlatformIcon id={platform.id} size={16} />
-                      </View>
-                      <View style={styles.connectLabelGroup}>
-                        <Text style={styles.connectLabel}>{platform.label}</Text>
-                        {isConnected && (
-                          <Text style={styles.connectUsername}>@{username}</Text>
-                        )}
-                      </View>
-                      <View style={[styles.connectCTA, isConnected && styles.connectCTAActive]}>
-                        {isConnected ? (
-                          <Text style={[styles.connectCTAText, styles.connectCTATextActive]}>Switch account</Text>
-                        ) : (
-                          <Text style={[styles.connectCTAText, styles.connectCTATextIdle]}>Connect</Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+              activePlatforms.map((platform) => {
+                const isConnected = typeof verified[platform.id] === 'string' && verified[platform.id].length > 0;
+                return (
+                  <View
+                    key={platform.id}
+                    style={[styles.connectRow, isConnected && styles.connectRowActive]}
+                  >
+                    <View style={styles.connectIconWrap}>
+                      <PlatformIcon id={platform.id} size={28} />
+                    </View>
+                    <Text style={[styles.connectLabel, isConnected && styles.connectLabelActive]}>
+                      {platform.label}
+                    </Text>
+                    <Text style={styles.connectAt}>@</Text>
+                    <TextInput
+                      style={[styles.connectInput, isConnected && styles.connectInputActive, styles.connectInputWeb]}
+                      placeholder="username"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={verified[platform.id] || ''}
+                      onChangeText={(v) =>
+                        setVerified((prev) => ({ ...prev, [platform.id]: v }))
+                      }
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      selectionColor="#ffffff"
+                      cursorColor="#ffffff"
+                      underlineColorAndroid="transparent"
+                      accessibilityLabel={`${platform.label} handle`}
+                    />
+                    <View style={[styles.connectIndicator, isConnected && styles.connectIndicatorActive]}>
+                      {isConnected && <Ionicons name="checkmark" size={12} color="#fff" />}
+                    </View>
+                  </View>
+                );
+              })
             ) : isSocialHandles ? (
               <View style={styles.notebookPaper}>
                 <View style={styles.notebookMargin} pointerEvents="none" />
@@ -250,7 +253,7 @@ export function QuizScreen({ navigation, route }) {
                   >
                     <Text style={styles.notebookIcon}>{platform.icon}</Text>
                     <TextInput
-                      style={styles.notebookInput}
+                      style={[styles.notebookInput, styles.connectInputWeb]}
                       placeholder={`${platform.label} — ${platform.placeholder}`}
                       placeholderTextColor={colors.textMuted}
                       value={handles[platform.id] || ''}
@@ -259,6 +262,9 @@ export function QuizScreen({ navigation, route }) {
                       }
                       autoCapitalize="none"
                       autoCorrect={false}
+                      selectionColor="#ffffff"
+                      cursorColor="#ffffff"
+                      underlineColorAndroid="transparent"
                       accessibilityLabel={`${platform.label} handle`}
                     />
                   </View>
@@ -293,7 +299,7 @@ export function QuizScreen({ navigation, route }) {
             {hasOtherOption && otherSelected && (
               <View style={styles.otherInputWrapper}>
                 <TextInput
-                  style={styles.otherInput}
+                  style={[styles.otherInput, styles.connectInputWeb]}
                   placeholder={otherPlaceholder}
                   placeholderTextColor="rgba(255,255,255,0.35)"
                   value={otherText}
@@ -301,6 +307,9 @@ export function QuizScreen({ navigation, route }) {
                   autoCapitalize="sentences"
                   autoCorrect
                   multiline
+                  selectionColor="#ffffff"
+                  cursorColor="#ffffff"
+                  underlineColorAndroid="transparent"
                   accessibilityLabel="Other description"
                 />
               </View>
@@ -340,7 +349,7 @@ export function QuizScreen({ navigation, route }) {
           <Button
             label={
               questionIndex === total - 1
-                ? isMoreQuestions ? 'Save & finish' : 'Finish'
+                ? isMoreQuestions ? 'Save & next' : 'Next'
                 : 'Next'
             }
             onPress={handleNext}
@@ -405,74 +414,6 @@ export function QuizScreen({ navigation, route }) {
         </View>
       </Modal>
 
-      {/* Connect account modal */}
-      <Modal
-        visible={!!connectingPlatform}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setConnectingPlatform(null)}
-      >
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={() => setConnectingPlatform(null)}
-          />
-          <View style={styles.modalSheet}>
-            <BlurView intensity={80} tint="dark" style={[StyleSheet.absoluteFill, styles.modalBlur]} />
-            <View style={styles.modalSheetOverlay} />
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>
-              Connect {connectingPlatform ? PLATFORM_META[connectingPlatform]?.label : ''}
-            </Text>
-            <View style={styles.connectModalInputRow}>
-              <Text style={styles.connectModalAt}>@</Text>
-              <TextInput
-                style={styles.connectModalInput}
-                value={connectInput}
-                onChangeText={setConnectInput}
-                placeholder={connectingPlatform ? PLATFORM_META[connectingPlatform]?.placeholder : 'username'}
-                placeholderTextColor="rgba(255,255,255,0.35)"
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={() => {
-                  if (connectInput.trim()) {
-                    setVerified((prev) => ({ ...prev, [connectingPlatform]: connectInput.trim() }));
-                  } else {
-                    setVerified((prev) => { const n = { ...prev }; delete n[connectingPlatform]; return n; });
-                  }
-                  setConnectingPlatform(null);
-                }}
-              />
-            </View>
-            <View style={styles.connectModalActions}>
-              {verified[connectingPlatform] && (
-                <TouchableOpacity
-                  style={styles.connectModalRemove}
-                  onPress={() => {
-                    setVerified((prev) => { const n = { ...prev }; delete n[connectingPlatform]; return n; });
-                    setConnectingPlatform(null);
-                  }}
-                >
-                  <Text style={styles.connectModalRemoveText}>Remove</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity
-                style={[styles.connectModalSave, !connectInput.trim() && styles.connectModalSaveDisabled]}
-                onPress={() => {
-                  if (!connectInput.trim()) return;
-                  setVerified((prev) => ({ ...prev, [connectingPlatform]: connectInput.trim() }));
-                  setConnectingPlatform(null);
-                }}
-              >
-                <Text style={styles.connectModalSaveText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }
@@ -736,152 +677,75 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontFamily: 'PlusJakartaSans_600SemiBold',
   },
-  // Verify & connect
-  connectList: {
-    gap: 10,
-  },
+  // Verify & connect — matches RadioOption style
   connectRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
+    paddingHorizontal: 24,
+    height: 64,
+    borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
-  },
-  connectOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.10)',
-  },
-  connectOverlaySelected: {
-    backgroundColor: 'rgba(0,0,0,0.40)',
-  },
-  connectInsetShadow: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 8,
+    borderColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    gap: 10,
   },
   connectRowActive: {
-    backgroundColor: 'rgba(0,0,0,0.40)',
     borderColor: '#777',
+    backgroundColor: 'rgba(0,0,0,0.30)',
   },
   connectIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    width: 28,
+    height: 28,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  connectIconActive: {
-    backgroundColor: 'rgba(255,255,255,0.12)',
-  },
-
   connectLabel: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: '#fff',
+    color: 'rgba(255,255,255,0.8)',
+    width: 90,
   },
-  connectCTA: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 999,
-    backgroundColor: '#000',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-  connectCTAActive: {
-    backgroundColor: 'transparent',
-    borderColor: 'rgba(255,255,255,0.6)',
-  },
-  connectCTAText: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: '#fff',
-    letterSpacing: 0.1,
-  },
-  connectCTATextIdle: {
-    color: '#fff',
-  },
-  connectCTATextActive: {
-    color: 'rgba(255,255,255,0.9)',
-  },
-  connectLabelGroup: {
-    flex: 1,
-    gap: 2,
-  },
-  connectUsername: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: 'rgba(255,255,255,0.6)',
-  },
-  connectModalInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 12,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  connectModalAt: {
-    fontSize: 16,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: 'rgba(255,255,255,0.6)',
-    marginRight: 4,
-  },
-  connectModalInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: '#fff',
-  },
-  connectModalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-    marginHorizontal: 20,
-    marginTop: 14,
-    marginBottom: 8,
-  },
-  connectModalRemove: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,60,60,0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,60,60,0.3)',
-  },
-  connectModalRemoveText: {
+  connectAt: {
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: 'rgba(255,100,100,0.9)',
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: 'rgba(255,255,255,0.4)',
   },
-  connectModalSave: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 999,
-    alignItems: 'center',
-    backgroundColor: '#000',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  connectModalSaveDisabled: {
-    opacity: 0.4,
-  },
-  connectModalSaveText: {
-    fontSize: 15,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
+  connectInputWeb: Platform.select({
+    web: {
+      outlineStyle: 'none',
+      caretColor: '#ffffff',
+      accentColor: '#ffffff',
+    },
+  }),
+  connectLabelActive: {
     color: '#fff',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  connectInput: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: 'rgba(255,255,255,0.8)',
+    paddingRight: 12,
+  },
+  connectInputActive: {
+    color: '#fff',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  connectIndicator: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(28,26,46,0.06)',
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  connectIndicatorActive: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderColor: 'rgba(255,255,255,0.4)',
   },
 });

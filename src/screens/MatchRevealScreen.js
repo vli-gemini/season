@@ -4,122 +4,160 @@ import {
   Text,
   StyleSheet,
   Animated,
-  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from '../components/Gradient';
+import Svg, { Line, Circle } from 'react-native-svg';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { Button } from '../components/Button';
 
-const AVATAR_COLORS = [
-  'rgba(176, 140, 220, 0.50)',
-  'rgba(138, 173, 160, 0.50)',
-  'rgba(130, 180, 210, 0.50)',
-  'rgba(210, 150, 180, 0.50)',
-  'rgba(120, 185, 195, 0.50)',
-  'rgba(195, 155, 225, 0.50)',
-  'rgba(175, 195, 155, 0.50)',
+// Dandelion seeds: angle (degrees), stem length, avatar radius
+// Spread across a full circle with varied lengths for organic feel
+const SEEDS = [
+  { angle: -90, length: 88, r: 22 },   // top — "you"
+  { angle: -45, length: 76, r: 18 },
+  { angle: -15, length: 82, r: 18 },
+  { angle:  20, length: 70, r: 18 },
+  { angle:  55, length: 78, r: 18 },
+  { angle:  90, length: 72, r: 18 },
+  { angle: 130, length: 80, r: 18 },
+  { angle: 165, length: 74, r: 18 },
+  { angle: -155, length: 82, r: 18 },
+  { angle: -120, length: 76, r: 18 },
 ];
 
-function LockedAvatar({ color, delay }) {
-  const opacity = useRef(new Animated.Value(0)).current;
+const CANVAS = 280; // SVG canvas size
+const CX = CANVAS / 2;
+const CY = CANVAS / 2;
 
-  useEffect(() => {
-    Animated.timing(opacity, {
-      toValue: 1,
-      duration: 600,
-      delay,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+function toRad(deg) {
+  return (deg * Math.PI) / 180;
+}
+
+function DandelionSeed({ seed, index, stemProgress, avatarOpacity }) {
+  const rad = toRad(seed.angle);
+  const isYou = index === 0;
+
+  const tipX = CX + Math.cos(rad) * seed.length;
+  const tipY = CY + Math.sin(rad) * seed.length;
+
+  // Animated stem end point via interpolation
+  const animX = stemProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CX, tipX],
+  });
+  const animY = stemProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [CY, tipY],
+  });
 
   return (
-    <Animated.View style={[styles.avatarSlot, { opacity }]}>
-      <View style={[styles.avatarCircle, { backgroundColor: color }]} />
-      <BlurView intensity={28} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={styles.avatarLockOverlay}>
-        <Ionicons name="lock-closed" size={13} color="rgba(255,255,255,0.5)" />
-      </View>
-    </Animated.View>
+    <>
+      {/* Avatar circle at tip */}
+      <Animated.View
+        style={[
+          styles.seedAvatar,
+          isYou ? styles.seedAvatarYou : styles.seedAvatarLocked,
+          {
+            width: seed.r * 2,
+            height: seed.r * 2,
+            borderRadius: seed.r,
+            left: tipX - seed.r,
+            top: tipY - seed.r,
+            opacity: avatarOpacity,
+          },
+        ]}
+      >
+        {isYou ? (
+          <Text style={styles.youLabelText}>you</Text>
+        ) : (
+          <Ionicons name="lock-closed" size={10} color="rgba(255,255,255,0.30)" />
+        )}
+      </Animated.View>
+    </>
   );
 }
 
-function YouAvatar({ delay }) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.85)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 700, delay, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 1, delay, useNativeDriver: true, tension: 60 }),
-    ]).start();
-  }, []);
-
+function DandelionSvg({ stemProgress }) {
   return (
-    <Animated.View style={[styles.avatarSlot, { opacity, transform: [{ scale }] }]}>
-      <LinearGradient
-        colors={colors.gradientAccent}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.youCircle}
-      />
-      <View style={styles.youLabel}>
-        <Text style={styles.youLabelText}>You</Text>
-      </View>
-    </Animated.View>
+    <Svg width={CANVAS} height={CANVAS}>
+      {/* Center dot */}
+      <Circle cx={CX} cy={CY} r={4} fill="rgba(255,255,255,0.25)" />
+      {SEEDS.map((seed, i) => {
+        const rad = toRad(seed.angle);
+        const tipX = CX + Math.cos(rad) * seed.length;
+        const tipY = CY + Math.sin(rad) * seed.length;
+        return (
+          <Line
+            key={i}
+            x1={CX}
+            y1={CY}
+            x2={tipX}
+            y2={tipY}
+            stroke="rgba(255,255,255,0.20)"
+            strokeWidth={0.8}
+          />
+        );
+      })}
+    </Svg>
   );
 }
 
 export function MatchRevealScreen({ navigation }) {
-  const headingOpacity = useRef(new Animated.Value(0)).current;
-  const headingY = useRef(new Animated.Value(12)).current;
+  const contentOpacity = useRef(new Animated.Value(0)).current;
+  const contentY = useRef(new Animated.Value(12)).current;
+  const stemProgress = useRef(new Animated.Value(0)).current;
+  const avatarOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    Animated.sequence([
+      Animated.timing(stemProgress, { toValue: 1, duration: 800, delay: 100, useNativeDriver: false }),
+      Animated.timing(avatarOpacity, { toValue: 1, duration: 500, useNativeDriver: true }),
+    ]).start();
+
     Animated.parallel([
-      Animated.timing(headingOpacity, { toValue: 1, duration: 700, delay: 700, useNativeDriver: true }),
-      Animated.timing(headingY, { toValue: 0, duration: 600, delay: 700, useNativeDriver: true }),
+      Animated.timing(contentOpacity, { toValue: 1, duration: 700, delay: 1000, useNativeDriver: true }),
+      Animated.timing(contentY, { toValue: 0, duration: 600, delay: 1000, useNativeDriver: true }),
     ]).start();
   }, []);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <LinearGradient
-        colors={colors.gradientBackground}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
-
-      <View style={styles.orbTop} />
-      <View style={styles.orbBottom} />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
 
       <View style={styles.container}>
-        <Text style={styles.wordmark}>Season</Text>
 
-        {/* Cohort grid */}
-        <View style={styles.gridWrap}>
-          <View style={styles.grid}>
-            <YouAvatar delay={100} />
-            {AVATAR_COLORS.map((color, i) => (
-              <LockedAvatar key={i} color={color} delay={150 + i * 60} />
+        {/* Dandelion */}
+        <View style={styles.dandelionWrap}>
+          <View style={{ width: CANVAS, height: CANVAS }}>
+            <DandelionSvg stemProgress={stemProgress} />
+            {SEEDS.map((seed, i) => (
+              <DandelionSeed
+                key={i}
+                seed={seed}
+                index={i}
+                stemProgress={stemProgress}
+                avatarOpacity={avatarOpacity}
+              />
             ))}
           </View>
 
-          {/* Glass overlay label */}
           <View style={styles.cohortBadge}>
-            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, styles.cohortBadgeOverlay]} />
-            <Ionicons name="people" size={13} color={colors.accent} />
+            <Ionicons name="people" size={12} color="rgba(255,255,255,0.45)" />
             <Text style={styles.cohortBadgeText}>A small group matched</Text>
           </View>
         </View>
 
-        {/* Heading */}
+        {/* Heading + body */}
         <Animated.View
-          style={[styles.textBlock, { opacity: headingOpacity, transform: [{ translateY: headingY }] }]}
+          style={[styles.textBlock, { opacity: contentOpacity, transform: [{ translateY: contentY }] }]}
         >
           <Text style={styles.heading}>Your cohort{'\n'}is ready.</Text>
           <Text style={styles.body}>
@@ -128,12 +166,13 @@ export function MatchRevealScreen({ navigation }) {
         </Animated.View>
 
         {/* CTA */}
-        <Animated.View style={[styles.ctaBlock, { opacity: headingOpacity }]}>
+        <Animated.View style={[styles.ctaBlock, { opacity: contentOpacity }]}>
           <Button
             label="Enter the season"
             onPress={() => navigation.replace('Home')}
           />
         </Animated.View>
+
       </View>
     </SafeAreaView>
   );
@@ -144,83 +183,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  orbTop: {
-    position: 'absolute',
-    top: -40,
-    left: -60,
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: 'rgba(123, 111, 255, 0.13)',
+  bgImage: {
+    width: '100%',
+    height: '100%',
   },
-  orbBottom: {
-    position: 'absolute',
-    bottom: 60,
-    right: -60,
-    width: 240,
-    height: 240,
-    borderRadius: 120,
-    backgroundColor: 'rgba(138, 173, 160, 0.10)',
+  bgOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   container: {
     flex: 1,
     paddingHorizontal: contentPadding,
-    paddingTop: 20,
     paddingBottom: 48,
-    gap: 36,
+    gap: 28,
     justifyContent: 'center',
   },
-  wordmark: {
-    fontSize: 17,
-    fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
-    letterSpacing: 0.5,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-  gridWrap: {
+  dandelionWrap: {
     alignItems: 'center',
     gap: 16,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 12,
-    width: 240,
-  },
-  avatarSlot: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.10)',
-  },
-  avatarCircle: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 26,
-  },
-  avatarLockOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  seedAvatar: {
+    position: 'absolute',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
-  youCircle: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 26,
+  seedAvatarYou: {
+    borderColor: 'rgba(255,255,255,0.50)',
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
-  youLabel: {
-    position: 'absolute',
-    bottom: -18,
-    alignSelf: 'center',
+  seedAvatarLocked: {
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.07)',
   },
   youLabelText: {
     fontSize: 10,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: 'rgba(255,255,255,0.70)',
     letterSpacing: 0.3,
   },
   cohortBadge: {
@@ -230,42 +228,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 999,
-    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.glassBorder,
-  },
-  cohortBadgeOverlay: {
+    borderColor: 'rgba(255,255,255,0.12)',
     backgroundColor: 'rgba(255,255,255,0.05)',
   },
   cohortBadgeText: {
     fontSize: 12,
-    fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 0.2,
   },
   textBlock: {
-    gap: 14,
+    gap: 12,
   },
   heading: {
-    fontSize: 40,
-    fontFamily: 'DMSerifDisplay_400Regular',
-    color: '#EDD9FF',
-    lineHeight: 50,
+    fontSize: 36,
+    fontFamily: 'PlusJakartaSans_300Light',
+    color: '#ffffff',
+    lineHeight: 46,
     letterSpacing: -0.5,
   },
   body: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 23,
   },
   ctaBlock: {
-    gap: 18,
-    alignItems: 'center',
-  },
-  laterText: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    alignItems: 'stretch',
   },
 });

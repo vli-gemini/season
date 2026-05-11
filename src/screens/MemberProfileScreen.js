@@ -6,15 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
-import { LinearGradient } from '../components/Gradient';
-import { getSeasonGradient } from '../theme/seasonGradient';
-import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { MEMBER_DETAILS } from '../config/members';
 import { Embers } from '../components/Embers';
 
@@ -29,7 +27,7 @@ function Avatar({ user, size = 64 }) {
           borderRadius: size / 2,
           backgroundColor: user.color + '30',
           borderWidth: 2,
-          borderColor: user.color + '55',
+          borderColor: user.color + '70',
         },
       ]}
     >
@@ -47,7 +45,7 @@ function PlatformRow({ platform }) {
         <Ionicons
           name={platform.id === 'youtube' ? 'logo-youtube' : 'musical-notes-outline'}
           size={16}
-          color={platform.id === 'youtube' ? '#FF453A' : colors.textSecondary}
+          color={platform.id === 'youtube' ? '#FF6B6B' : 'rgba(255,255,255,0.55)'}
         />
       </View>
       <View>
@@ -61,7 +59,7 @@ function PlatformRow({ platform }) {
 function GlassSection({ children, style }) {
   return (
     <View style={[styles.glassSection, style]}>
-      <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, styles.glassSectionOverlay]} />
       {children}
     </View>
@@ -82,17 +80,17 @@ export function MemberProfileScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
         <View style={styles.header}>
           <TouchableOpacity
@@ -101,7 +99,7 @@ export function MemberProfileScreen({ navigation, route }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{user.name.split(' ')[0]}</Text>
           <View style={{ width: 38 }} />
@@ -142,7 +140,20 @@ export function MemberProfileScreen({ navigation, route }) {
           </View>
         )}
 
-        {/* DM Settings */}
+        {/* DM + Settings */}
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.dmButton}
+            onPress={() => navigation.navigate('DM', { user })}
+            activeOpacity={0.75}
+          >
+            <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+            <View style={[StyleSheet.absoluteFill, styles.dmButtonOverlay]} />
+            <Ionicons name="chatbubble-outline" size={16} color="rgba(255,255,255,0.80)" />
+            <Text style={styles.dmButtonLabel}>Send a message</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Settings</Text>
           <GlassSection>
@@ -158,7 +169,7 @@ export function MemberProfileScreen({ navigation, route }) {
               <Ionicons
                 name={muted ? 'notifications-off-outline' : 'notifications-outline'}
                 size={16}
-                color={colors.textMuted}
+                color="rgba(255,255,255,0.45)"
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -186,14 +197,16 @@ export function MemberProfileScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -206,7 +219,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.2,
   },
   scroll: { paddingBottom: 56 },
@@ -219,25 +232,25 @@ const styles = StyleSheet.create({
   avatar: { alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   avatarText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   name: {
     fontSize: 24,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 4,
     letterSpacing: -0.3,
   },
   handle: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     marginBottom: 12,
   },
   bio: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 21,
     textAlign: 'center',
     maxWidth: 280,
@@ -248,10 +261,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   glassSectionOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
 
   statsRow: {
@@ -264,18 +277,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 32,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
   },
   statDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(255,255,255,0.15)',
     marginHorizontal: 8,
   },
   section: {
@@ -285,7 +298,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -295,20 +308,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
     gap: 12,
   },
   platformIcon: { width: 28, alignItems: 'center' },
   platformLabel: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     marginBottom: 2,
   },
   platformHandle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
+  },
+  dmButton: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 14,
+  },
+  dmButtonOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+  },
+  dmButtonLabel: {
+    fontSize: 15,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: 'rgba(255,255,255,0.85)',
   },
   settingRow: {
     flexDirection: 'row',
@@ -317,12 +349,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   settingRowBtn: {},
   settingLabel: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
   },
 });

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -14,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from '../components/Gradient';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
-import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
@@ -40,7 +40,7 @@ function Avatar({ member, size = 44 }) {
           borderRadius: size / 2,
           backgroundColor: member.color + '33',
           borderWidth: 1.5,
-          borderColor: member.color + '55',
+          borderColor: member.color + '70',
         },
       ]}
     >
@@ -66,7 +66,7 @@ function GroupAvatar({ size = 72 }) {
 function GlassSection({ children, style }) {
   return (
     <View style={[styles.glassSection, style]}>
-      <BlurView intensity={18} tint="dark" style={StyleSheet.absoluteFill} />
+      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
       <View style={[StyleSheet.absoluteFill, styles.glassSectionOverlay]} />
       {children}
     </View>
@@ -79,17 +79,17 @@ export function GroupSettingsScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
         <View style={styles.header}>
           <TouchableOpacity
@@ -98,7 +98,7 @@ export function GroupSettingsScreen({ navigation }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{GROUP.name}</Text>
           <View style={{ width: 38 }} />
@@ -126,7 +126,7 @@ export function GroupSettingsScreen({ navigation }) {
               >
                 <Avatar member={member} size={40} />
                 <Text style={styles.memberName}>{member.name}</Text>
-                <Ionicons name="chevron-forward" size={15} color={colors.textMuted} style={{ opacity: 0.5 }} />
+                <Ionicons name="chevron-forward" size={15} color="rgba(255,255,255,0.35)" />
               </TouchableOpacity>
             ))}
           </GlassSection>
@@ -142,7 +142,7 @@ export function GroupSettingsScreen({ navigation }) {
                 value={notificationsOn}
                 onValueChange={setNotificationsOn}
                 trackColor={{ false: 'rgba(255,255,255,0.15)', true: colors.accentVibrant + '80' }}
-                thumbColor={notificationsOn ? colors.accent : colors.textMuted}
+                thumbColor={notificationsOn ? colors.accent : 'rgba(255,255,255,0.55)'}
               />
             </View>
             <View style={[styles.settingRow, { borderBottomWidth: 0 }]}>
@@ -151,7 +151,7 @@ export function GroupSettingsScreen({ navigation }) {
                 value={showActivity}
                 onValueChange={setShowActivity}
                 trackColor={{ false: 'rgba(255,255,255,0.15)', true: colors.accentVibrant + '80' }}
-                thumbColor={showActivity ? colors.accent : colors.textMuted}
+                thumbColor={showActivity ? colors.accent : 'rgba(255,255,255,0.55)'}
               />
             </View>
           </GlassSection>
@@ -187,14 +187,16 @@ export function GroupSettingsScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -207,7 +209,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.2,
   },
   scroll: { paddingBottom: 48 },
@@ -223,41 +225,20 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     shadowColor: '#7B6FFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 16,
+    shadowOpacity: 0.55,
+    shadowRadius: 20,
   },
   groupName: {
     fontSize: 24,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 4,
     letterSpacing: -0.3,
   },
   groupMeta: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
-  },
-  progressSection: {
-    paddingHorizontal: contentPadding,
-    marginBottom: 28,
-  },
-  progressTrack: {
-    height: 3,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderRadius: 3,
-    marginBottom: 8,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  progressLabel: {
-    fontSize: 11,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
-    textAlign: 'right',
+    color: 'rgba(255,255,255,0.45)',
   },
   section: {
     paddingHorizontal: contentPadding,
@@ -266,7 +247,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 1,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -277,16 +258,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.glassBorder,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   glassSectionOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
 
   avatar: { alignItems: 'center', justifyContent: 'center' },
   avatarText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   memberRow: {
     flexDirection: 'row',
@@ -295,13 +276,13 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     gap: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   memberName: {
     flex: 1,
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   settingRow: {
     flexDirection: 'row',
@@ -310,11 +291,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.10)',
   },
   settingLabel: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
   },
 });

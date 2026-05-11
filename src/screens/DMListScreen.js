@@ -5,15 +5,13 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
-import { LinearGradient } from '../components/Gradient';
-import { getSeasonGradient } from '../theme/seasonGradient';
-import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
 
@@ -52,7 +50,7 @@ function Avatar({ member, size = 44 }) {
           borderRadius: size / 2,
           backgroundColor: member.color + '33',
           borderWidth: 1.5,
-          borderColor: member.color + '55',
+          borderColor: member.color + '70',
         },
       ]}
     >
@@ -109,17 +107,17 @@ export function DMListScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header — glass bar */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
         <View style={styles.header}>
           <TouchableOpacity
@@ -128,7 +126,7 @@ export function DMListScreen({ navigation }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
           <Text style={styles.title}>Messages</Text>
           <View style={{ width: 38 }} />
@@ -148,14 +146,16 @@ export function DMListScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.2,
   },
   list: {
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   avatar: { alignItems: 'center', justifyContent: 'center' },
   avatarText: {
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   rowInfo: { flex: 1 },
   rowMeta: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   timestamp: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.45)',
   },
   timestampUnread: {
     color: colors.accentVibrant,
@@ -211,20 +211,20 @@ const styles = StyleSheet.create({
   rowName: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
   },
   rowNameUnread: {
-    color: colors.textPrimary,
+    color: '#fff',
     fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   rowPreview: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     lineHeight: 18,
   },
   rowPreviewUnread: {
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
     fontFamily: 'PlusJakartaSans_500Medium',
   },
   unreadBadge: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     marginLeft: 60,
   },
 });

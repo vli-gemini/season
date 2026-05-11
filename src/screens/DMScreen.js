@@ -8,15 +8,13 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
-import { LinearGradient } from '../components/Gradient';
-import { getSeasonGradient } from '../theme/seasonGradient';
-import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { ME, DM_SEEDS } from '../config/members';
 import { Embers } from '../components/Embers';
 
@@ -31,11 +29,11 @@ function Avatar({ user, size = 30 }) {
           borderRadius: size / 2,
           backgroundColor: user.color + '33',
           borderWidth: 1.5,
-          borderColor: user.color + '55',
+          borderColor: user.color + '70',
         },
       ]}
     >
-      <Text style={{ fontSize: size * 0.35, color: colors.textPrimary, fontFamily: 'PlusJakartaSans_600SemiBold' }}>
+      <Text style={{ fontSize: size * 0.35, color: '#fff', fontFamily: 'PlusJakartaSans_600SemiBold' }}>
         {user.initials}
       </Text>
     </View>
@@ -84,17 +82,17 @@ export function DMScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(CURRENT_DAY, TOTAL_DAYS)}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header — glass bar */}
       <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
         <View style={styles.header}>
           <TouchableOpacity
@@ -103,7 +101,7 @@ export function DMScreen({ navigation, route }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerCenter}
@@ -146,13 +144,13 @@ export function DMScreen({ navigation, route }) {
         {/* Input bar — glass */}
         <View style={styles.inputWrap}>
           <View style={styles.inputGlass}>
-            <BlurView intensity={70} tint="systemMaterial" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
             <View style={[StyleSheet.absoluteFill, styles.inputOverlay]} />
             <View style={styles.inputRow}>
               <TextInput
                 style={styles.textInput}
                 placeholder="Message..."
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor="rgba(255,255,255,0.40)"
                 value={input}
                 onChangeText={setInput}
                 multiline
@@ -169,7 +167,7 @@ export function DMScreen({ navigation, route }) {
                 <Ionicons
                   name="arrow-up"
                   size={16}
-                  color={input.trim() ? '#fff' : colors.textMuted}
+                  color={input.trim() ? '#fff' : 'rgba(255,255,255,0.45)'}
                 />
               </TouchableOpacity>
             </View>
@@ -181,17 +179,19 @@ export function DMScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   flex: { flex: 1 },
 
   // Header
   headerWrap: {
     overflow: 'hidden',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   headerOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   header: {
     flexDirection: 'row',
@@ -218,12 +218,12 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#30D158',
     borderWidth: 1.5,
-    borderColor: colors.background,
+    borderColor: 'rgba(0,0,0,0.60)',
   },
   headerName: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 19,
   },
   headerOnlineLabel: {
@@ -249,27 +249,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   bubbleMe: {
-    backgroundColor: colors.bubbleSelf,
+    backgroundColor: 'rgba(255,255,255,0.22)',
     borderBottomRightRadius: 5,
     borderWidth: 1,
-    borderColor: 'rgba(123, 111, 255, 0.30)',
+    borderColor: 'rgba(255,255,255,0.30)',
   },
   bubbleOther: {
-    backgroundColor: colors.bubbleOther,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderBottomLeftRadius: 5,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   bubbleText: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 20,
   },
   time: {
     fontSize: 10,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.45)',
     marginTop: 5,
     marginLeft: 2,
   },
@@ -285,10 +285,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.18)',
   },
   inputOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(0,0,0,0.20)',
   },
   inputRow: {
     flexDirection: 'row',
@@ -303,16 +303,16 @@ const styles = StyleSheet.create({
     maxHeight: 100,
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     paddingVertical: 4,
   },
   sendBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 1,
