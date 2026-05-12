@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,17 +10,15 @@ import {
   Platform,
   ActionSheetIOS,
   Alert,
-  PanResponder,
   Animated,
   Image,
+  ScrollView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
-import { LinearGradient } from '../components/Gradient';
 import { contentPadding } from '../theme/layout';
-import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { ALL_MEMBERS, ME } from '../config/members';
 import { Embers } from '../components/Embers';
@@ -87,15 +85,22 @@ function Avatar({ member, size = 34 }) {
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: member.color + '35',
+          backgroundColor: 'rgba(255,255,255,0.12)',
           borderWidth: 1.5,
-          borderColor: member.color + '70',
+          borderColor: 'rgba(255,255,255,0.28)',
+          overflow: 'hidden',
         },
       ]}
     >
-      <Text style={[styles.avatarText, { fontSize: size * 0.33 }]}>
-        {member.initials}
-      </Text>
+      {member?.avatar ? (
+        <Image
+          source={member.avatar}
+          style={{ width: size, height: size }}
+          resizeMode="cover"
+        />
+      ) : (
+        <Ionicons name="person" size={size * 0.52} color="rgba(255,255,255,0.75)" />
+      )}
     </View>
   );
 }
@@ -157,7 +162,7 @@ function Message({ message, prevMessage, onSenderPress }) {
             onPress={() => onSenderPress?.(message.sender)}
             activeOpacity={0.7}
           >
-            <Text style={[styles.senderName, { color: message.sender.color }]}>
+            <Text style={styles.senderName}>
               {message.sender.name.split(' ')[0]}
             </Text>
             <Text style={styles.msgTime}>{message.timestamp}</Text>
@@ -178,116 +183,155 @@ function Message({ message, prevMessage, onSenderPress }) {
   );
 }
 
-function clampDay(relX, width, total) {
-  const pct = Math.max(0, Math.min(1, relX / width));
-  return Math.max(1, Math.min(total, Math.round(pct * (total - 1)) + 1));
-}
+// ── Mascot circle button ──────────────────────────────────────────────────────
 
-function SeasonProgressHeader({ day, totalDays, onDayChange }) {
-  const progress = (day - 1) / (totalDays - 1);
-  const daysLeft = totalDays - day;
-
-  const trackRef   = useRef(null);
-  const trackW     = useRef(0);
-  const trackPageX = useRef(0);
-  const dayScale   = useRef(new Animated.Value(1)).current;
-  const prevDay    = useRef(day);
-
-  useEffect(() => {
-    if (day === prevDay.current) return;
-    prevDay.current = day;
-    Animated.sequence([
-      Animated.timing(dayScale, { toValue: 1.3, duration: 90, useNativeDriver: true }),
-      Animated.spring(dayScale, { toValue: 1, useNativeDriver: true, friction: 4 }),
-    ]).start();
-  }, [day]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder:  () => true,
-      onPanResponderGrant: (evt) => {
-        const relX = evt.nativeEvent.pageX - trackPageX.current;
-        onDayChange(clampDay(relX, trackW.current, totalDays));
-      },
-      onPanResponderMove: (evt, gs) => {
-        const relX = gs.moveX - trackPageX.current;
-        onDayChange(clampDay(relX, trackW.current, totalDays));
-      },
-    })
-  ).current;
-
-  const thumbPct = `${Math.round(progress * 100)}%`;
-
+function MascotDayButton({ day, totalDays, onPress, isOpen }) {
   return (
-    <View style={styles.progressCard}>
-      <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
-      <View style={[StyleSheet.absoluteFill, styles.progressCardOverlay]} />
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={styles.mascotBtn}
+      accessibilityLabel={`Day ${day}, open date picker`}
+      accessibilityRole="button"
+    >
+      <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.mascotBtnOverlay]} />
 
-      <View style={styles.progressCardRow}>
-        <TouchableOpacity
-          onPress={() => onDayChange(Math.max(1, day - 1))}
-          style={styles.dayArrow}
-          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-          accessibilityLabel="Previous day"
-          accessibilityRole="button"
-        >
-          <Ionicons name="chevron-back" size={13} color="rgba(255,255,255,0.55)" />
-        </TouchableOpacity>
-
-        <Animated.Text
-          style={[styles.progressCardDay, { transform: [{ scale: dayScale }] }]}
-        >
-          Day {day}
-        </Animated.Text>
-
-        <TouchableOpacity
-          onPress={() => onDayChange(Math.min(totalDays, day + 1))}
-          style={styles.dayArrow}
-          hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-          accessibilityLabel="Next day"
-          accessibilityRole="button"
-        >
-          <Ionicons name="chevron-forward" size={13} color="rgba(255,255,255,0.55)" />
-        </TouchableOpacity>
-
-        <Text style={styles.progressCardOf}>of {totalDays}</Text>
-        <View style={styles.progressCardSpacer} />
-        <Text style={styles.progressCardRight}>
-          {daysLeft > 0 ? `${daysLeft} days left` : 'Season complete'}
-        </Text>
-      </View>
-
-      <View
-        ref={trackRef}
-        style={styles.progressTrackOuter}
-        onLayout={() => {
-          trackRef.current?.measure((_fx, _fy, w, _h, px) => {
-            trackW.current = w;
-            trackPageX.current = px;
-          });
-        }}
-        {...panResponder.panHandlers}
-      >
-        <View style={styles.progressTrack} pointerEvents="none">
-          <LinearGradient
-            colors={getSeasonGradient(day, totalDays)}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.progressFill, { width: thumbPct }]}
-          />
+      {/* Mascot clipped to head area */}
+      <View style={styles.mascotClipOuter} pointerEvents="none">
+        <View style={styles.mascotClipInner}>
+          <SeasonMascot day={day} totalDays={totalDays} style={styles.mascotInBtn} />
         </View>
-        <View style={[styles.progressThumb, { left: thumbPct }]} />
       </View>
-    </View>
+
+      {/* Day badge */}
+      <View style={styles.dayBadge}>
+        <Text style={styles.dayBadgeText}>Day {day}</Text>
+      </View>
+
+      {/* Open/close indicator */}
+      <View style={styles.mascotChevron}>
+        <Ionicons
+          name={isOpen ? 'chevron-up' : 'chevron-down'}
+          size={9}
+          color="rgba(255,255,255,0.55)"
+        />
+      </View>
+    </TouchableOpacity>
   );
 }
 
+// ── Date picker dropdown ──────────────────────────────────────────────────────
+
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const SHORT_DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function DatePickerDropdown({ visible, day, totalDays, seasonStart, onSelectDay, style }) {
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const [rendered, setRendered] = useState(visible);
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (visible) {
+      setRendered(true);
+      Animated.spring(slideAnim, {
+        toValue: 1,
+        tension: 65,
+        friction: 11,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => setRendered(false));
+    }
+  }, [visible]);
+
+  // Scroll to selected day when opened
+  useEffect(() => {
+    if (visible && scrollRef.current) {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: Math.max(0, (day - 3)) * 52, animated: true });
+      }, 150);
+    }
+  }, [visible, day]);
+
+  if (!rendered) return null;
+
+  const translateY = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [-16, 0] });
+  const opacity    = slideAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 1] });
+
+  return (
+    <Animated.View style={[styles.datePicker, style, { opacity, transform: [{ translateY }] }]}>
+      <BlurView intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, styles.datePickerOverlay]} />
+
+      <ScrollView
+        ref={scrollRef}
+        style={styles.datePickerScroll}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {Array.from({ length: totalDays }, (_, i) => {
+          const d = i + 1;
+          const date = new Date(seasonStart);
+          date.setDate(date.getDate() + i);
+          const isSelected = d === day;
+          return (
+            <TouchableOpacity
+              key={d}
+              style={[styles.dpRow, isSelected && styles.dpRowSelected]}
+              onPress={() => onSelectDay(d)}
+              activeOpacity={0.7}
+            >
+              {isSelected && (
+                <View style={[StyleSheet.absoluteFill, styles.dpRowSelectedBg]} />
+              )}
+              <Text style={[styles.dpNum, isSelected && styles.dpNumSelected]}>
+                Day {d}
+              </Text>
+              <Text style={[styles.dpDate, isSelected && styles.dpDateSelected]}>
+                {SHORT_MONTHS[date.getMonth()]} {date.getDate()}
+              </Text>
+              <Text style={[styles.dpDow, isSelected && styles.dpDowSelected]}>
+                {SHORT_DAYS[date.getDay()]}
+              </Text>
+              {isSelected && (
+                <Ionicons name="checkmark" size={13} color="rgba(255,255,255,0.80)" style={styles.dpCheck} />
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </Animated.View>
+  );
+}
+
+// ── Main screen ───────────────────────────────────────────────────────────────
+
 export function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
+  const [inputHeight, setInputHeight] = useState(22);
   const [day, setDay] = useState(CURRENT_DAY);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const flatListRef = useRef(null);
+  const mountOp = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(mountOp, { toValue: 1, duration: 1000, useNativeDriver: true }).start();
+  }, []);
+
+  // Compute season start date (day 1) from CURRENT_DAY and today
+  const seasonStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (CURRENT_DAY - 1));
+    return d;
+  }, []);
 
   const handleAttach = () => {
     const options = ['Share a link', 'Share a photo', 'Record a video', 'Cancel'];
@@ -334,36 +378,38 @@ export function HomeScreen({ navigation }) {
       },
     ]);
     setInput('');
+    setInputHeight(22);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
   };
+
+  const handleSelectDay = useCallback((d) => {
+    setDay(d);
+    setPickerOpen(false);
+  }, []);
 
   const daysLeft = TOTAL_DAYS - day;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <View style={styles.root}>
       <Image
         source={require('../../assets/splash background.png')}
         style={[StyleSheet.absoluteFill, styles.bgImage]}
         resizeMode="cover"
       />
       <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
+
+      <Animated.View style={[styles.flex, { opacity: mountOp }]}>
       <Embers currentDay={day} />
 
-      {/* ── Header ── */}
-      <View style={styles.headerWrap}>
-        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, styles.headerOverlay]} />
-
+      {/* ── Header (transparent, floats over background) ── */}
+      <View style={[styles.headerWrap, { paddingTop: insets.top }]}>
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.headerAvatarBtn}
-            onPress={() => navigation.navigate('Profile')}
-            activeOpacity={0.75}
-            accessibilityLabel="Your profile"
-            accessibilityRole="button"
-          >
-            <Avatar member={ME} size={34} />
-          </TouchableOpacity>
+          <MascotDayButton
+            day={day}
+            totalDays={TOTAL_DAYS}
+            onPress={() => setPickerOpen((v) => !v)}
+            isOpen={pickerOpen}
+          />
 
           <TouchableOpacity
             style={styles.headerCenter}
@@ -378,16 +424,45 @@ export function HomeScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.headerIconBtn}
-            onPress={() => navigation.navigate('DMList')}
-            accessibilityLabel="Direct messages"
-            accessibilityRole="button"
-          >
-            <Ionicons name="chatbubble-ellipses-outline" size={19} color="rgba(255,255,255,0.70)" />
-          </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={() => navigation.navigate('DMList')}
+              accessibilityLabel="Direct messages"
+              accessibilityRole="button"
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={19} color="rgba(255,255,255,0.70)" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.headerAvatarBtn}
+              onPress={() => navigation.navigate('Profile')}
+              activeOpacity={0.75}
+              accessibilityLabel="Your profile"
+              accessibilityRole="button"
+            >
+              <Avatar member={ME} size={34} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
+
+      {/* ── Date picker + tap-to-close (absolutely positioned from root) ── */}
+      {pickerOpen && (
+        <TouchableOpacity
+          style={[StyleSheet.absoluteFill, { zIndex: 9 }]}
+          activeOpacity={1}
+          onPress={() => setPickerOpen(false)}
+        />
+      )}
+      <DatePickerDropdown
+        visible={pickerOpen}
+        day={day}
+        totalDays={TOTAL_DAYS}
+        seasonStart={seasonStart}
+        onSelectDay={handleSelectDay}
+        style={{ top: insets.top + 74, left: contentPadding, right: contentPadding }}
+      />
 
       {/* ── Season ending banner ── */}
       {daysLeft <= 7 && (
@@ -440,29 +515,13 @@ export function HomeScreen({ navigation }) {
               />
             );
           }}
-          ListHeaderComponent={
-            <SeasonProgressHeader
-              day={day}
-              totalDays={TOTAL_DAYS}
-              onDayChange={setDay}
-            />
-          }
           contentContainerStyle={styles.messageList}
           showsVerticalScrollIndicator={false}
         />
 
-        <SeasonMascot
-          day={day}
-          totalDays={TOTAL_DAYS}
-          style={styles.mascot}
-        />
-
         {/* ── Input bar ── */}
         <View style={styles.inputBarWrap}>
-          <View style={styles.inputBarGlass}>
-            <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
-            <View style={[StyleSheet.absoluteFill, styles.inputBarOverlay]} />
-
+          <View style={[styles.inputBarGlass, input.length > 0 && styles.inputBarGlassActive]}>
             <View style={styles.inputBar}>
               <TouchableOpacity
                 style={styles.attachBtn}
@@ -470,16 +529,25 @@ export function HomeScreen({ navigation }) {
                 accessibilityLabel="Attach file"
                 accessibilityRole="button"
               >
-                <Ionicons name="add-circle-outline" size={22} color="rgba(255,255,255,0.50)" />
+                <Ionicons name="add-outline" size={22} color="rgba(255,255,255,0.50)" />
               </TouchableOpacity>
               <TextInput
-                style={styles.textInput}
+                style={[styles.textInput, { height: inputHeight }, Platform.OS === 'web' && styles.textInputWeb]}
                 placeholder="Share what you made..."
-                placeholderTextColor="rgba(255,255,255,0.40)"
+                placeholderTextColor="rgba(255,255,255,0.35)"
                 value={input}
-                onChangeText={setInput}
+                onChangeText={(text) => {
+                  if (text.length < input.length) setInputHeight(22);
+                  setInput(text);
+                }}
+                onContentSizeChange={(e) => setInputHeight(
+                  Math.max(22, Math.min(e.nativeEvent.contentSize.height, 90))
+                )}
                 multiline
                 maxLength={500}
+                selectionColor="#ffffff"
+                cursorColor="#ffffff"
+                underlineColorAndroid="transparent"
               />
               <TouchableOpacity
                 onPress={sendMessage}
@@ -492,50 +560,45 @@ export function HomeScreen({ navigation }) {
                 <Ionicons
                   name="arrow-up"
                   size={16}
-                  color={input.trim() ? '#fff' : 'rgba(255,255,255,0.45)'}
+                  color="#000"
                 />
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+      </Animated.View>
+    </View>
   );
 }
 
+const MASCOT_BTN_SIZE = 56;
+
 const styles = StyleSheet.create({
-  safe: {
+  root: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#0D0B14',
   },
   bgImage: {
     width: '100%',
     height: '100%',
   },
   bgOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.52)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   flex: { flex: 1 },
 
   // ── Header ──
   headerWrap: {
-    overflow: 'hidden',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.12)',
-  },
-  headerOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.20)',
+    zIndex: 20,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: contentPadding,
-    paddingTop: 10,
-    paddingBottom: 12,
+    paddingTop: 5,
+    paddingBottom: 8,
     gap: 12,
-  },
-  headerAvatarBtn: {
-    flexShrink: 0,
   },
   headerCenter: {
     flex: 1,
@@ -554,6 +617,12 @@ const styles = StyleSheet.create({
     marginTop: 1,
     letterSpacing: 0.1,
   },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 0,
+  },
   headerIconBtn: {
     width: 36,
     height: 36,
@@ -563,15 +632,129 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerAvatarBtn: {
     flexShrink: 0,
   },
   avatar: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: {
+
+  // ── Mascot button ──
+  mascotBtn: {
+    width: MASCOT_BTN_SIZE,
+    height: MASCOT_BTN_SIZE,
+    borderRadius: MASCOT_BTN_SIZE / 2,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  mascotBtnOverlay: {
+    backgroundColor: 'rgba(255,255,255,0.10)',
+  },
+  mascotClipOuter: {
+    width: MASCOT_BTN_SIZE,
+    height: 38,
+    overflow: 'hidden',
+    position: 'absolute',
+    top: -6,
+    alignItems: 'center',
+  },
+  mascotClipInner: {
+    marginLeft: -1,
+  },
+  mascotInBtn: {
+    // SeasonMascot style override — rendered at 90×122, we clip to show face
+  },
+  dayBadge: {
+    position: 'absolute',
+    bottom: 5,
+    alignSelf: 'center',
+    backgroundColor: 'rgba(0,0,0,0.38)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  dayBadgeText: {
+    fontSize: 9,
     fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: 'rgba(255,255,255,0.90)',
+    letterSpacing: 0.3,
+  },
+  mascotChevron: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+  },
+
+  // ── Date picker ──
+  datePicker: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 15,
+    height: 240,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+  },
+  datePickerOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.30)',
+  },
+  datePickerScroll: {
+    flex: 1,
+    paddingVertical: 6,
+  },
+  dpRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    gap: 14,
+    overflow: 'hidden',
+  },
+  dpRowSelected: {
+    // background handled by dpRowSelectedBg
+  },
+  dpRowSelectedBg: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 12,
+    marginHorizontal: 8,
+  },
+  dpNum: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+    color: 'rgba(255,255,255,0.65)',
+    width: 52,
+  },
+  dpNumSelected: {
     color: '#fff',
+  },
+  dpDate: {
+    fontSize: 13,
+    fontFamily: 'PlusJakartaSans_400Regular',
+    color: 'rgba(255,255,255,0.50)',
+    flex: 1,
+  },
+  dpDateSelected: {
+    color: 'rgba(255,255,255,0.85)',
+  },
+  dpDow: {
+    fontSize: 12,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: 'rgba(255,255,255,0.40)',
+    width: 32,
+    textAlign: 'right',
+  },
+  dpDowSelected: {
+    color: 'rgba(255,255,255,0.70)',
+  },
+  dpCheck: {
+    marginLeft: 4,
   },
 
   // ── Season ending banner ──
@@ -611,82 +794,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: contentPadding,
     paddingTop: 14,
     paddingBottom: 8,
-  },
-
-  // ── Season progress card (list header) ──
-  progressCard: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 16,
-    paddingTop: 13,
-    paddingBottom: 14,
-    marginBottom: 20,
-  },
-  progressCardOverlay: {
-    backgroundColor: 'rgba(255,255,255,0.06)',
-  },
-  progressCardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 2,
-  },
-  dayArrow: {
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressCardDay: {
-    fontSize: 15,
-    fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: '#fff',
-    minWidth: 52,
-    textAlign: 'center',
-  },
-  progressCardOf: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: 'rgba(255,255,255,0.55)',
-    marginLeft: 2,
-  },
-  progressCardSpacer: { flex: 1 },
-  progressCardRight: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: 'rgba(255,255,255,0.55)',
-  },
-  progressTrackOuter: {
-    height: 18,
-    justifyContent: 'center',
-  },
-  progressTrack: {
-    height: 5,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.20)',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  progressThumb: {
-    position: 'absolute',
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    top: 2,
-    marginLeft: -7,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.70)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    elevation: 3,
   },
 
   // ── Date separator ──
@@ -749,6 +856,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_600SemiBold',
     letterSpacing: 0.1,
+    color: '#fff',
   },
   msgTime: {
     fontSize: 10,
@@ -803,65 +911,54 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // ── Mascot ──
-  mascot: {
-    position: 'absolute',
-    right: 16,
-    bottom: Platform.OS === 'ios' ? 96 : 74,
-    zIndex: 10,
-  },
-
   // ── Input bar ──
   inputBarWrap: {
     paddingHorizontal: contentPadding,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   inputBarGlass: {
-    borderRadius: 26,
-    overflow: 'hidden',
+    borderRadius: 28,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.18)',
-  },
-  inputBarOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.20)',
+    borderColor: '#777',
+    backgroundColor: 'rgba(0,0,0,0.30)',
+    minHeight: 56,
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    paddingLeft: 10,
-    paddingRight: 8,
-    paddingVertical: 8,
+    paddingLeft: 14,
+    paddingRight: 10,
+    paddingVertical: 10,
     gap: 6,
+    minHeight: 54,
   },
   attachBtn: {
     paddingHorizontal: 2,
-    paddingVertical: 6,
+    marginBottom: 6,
     justifyContent: 'center',
   },
   textInput: {
     flex: 1,
-    minHeight: 34,
-    maxHeight: 110,
-    paddingHorizontal: 6,
-    paddingVertical: 7,
+    marginBottom: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 0,
+    textAlignVertical: 'center',
     fontSize: 15,
-    fontFamily: 'PlusJakartaSans_400Regular',
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: '#fff',
+  },
+  textInputWeb: {
+    outlineStyle: 'none',
+    caretColor: '#ffffff',
   },
   sendBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.10)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.20)',
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 1,
   },
-  sendBtnActive: {
-    backgroundColor: colors.accentVibrant,
-    borderColor: colors.accent,
-  },
+  sendBtnActive: {},
 });

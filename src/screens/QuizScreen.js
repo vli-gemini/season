@@ -121,7 +121,7 @@ export function QuizScreen({ navigation, route }) {
     } else if (isMoreQuestions) {
       navigation.navigate('Home');
     } else {
-      navigation.replace('Email', { answers: updatedAnswers });
+      navigation.replace('Name', { answers: updatedAnswers });
     }
   };
 

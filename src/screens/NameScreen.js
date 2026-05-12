@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,22 +15,21 @@ import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
 import { Button } from '../components/Button';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-export function EmailScreen({ navigation, route }) {
+export function NameScreen({ navigation, route }) {
   const answers = route.params?.answers ?? {};
-  const firstName = route.params?.firstName ?? '';
-  const lastName = route.params?.lastName ?? '';
-  const [email, setEmail] = useState('');
-  const [dirty, setDirty] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const lastNameRef = useRef(null);
 
-  const isValid = EMAIL_RE.test(email.trim());
-  const canContinue = isValid;
-  const showError = dirty && email.trim().length > 0 && !isValid;
+  const canContinue = firstName.trim().length > 0 && lastName.trim().length > 0;
 
   const handleContinue = () => {
-    if (!isValid) return;
-    navigation.replace('Waitlist', { answers, verifiedEmail: email.trim(), firstName, lastName });
+    if (!canContinue) return;
+    navigation.replace('Email', {
+      answers,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+    });
   };
 
   return (
@@ -48,17 +47,16 @@ export function EmailScreen({ navigation, route }) {
       >
         <View style={styles.container}>
           <View style={styles.questionFixed}>
-            <Text style={styles.question}>One last thing... where should we reach you?</Text>
+            <Text style={styles.question}>How should we call you?</Text>
             <Text style={styles.questionSub}>
-              We'll send your group match and updates here.
+              This is how you'll appear to your group.
             </Text>
           </View>
 
-          {/* Header — absolute, same as QuizScreen */}
           <View style={styles.headerBar} pointerEvents="box-none">
             <TouchableOpacity
               style={styles.backBtn}
-              onPress={() => navigation.replace('Name', { answers })}
+              onPress={() => navigation.replace('Quiz', { questionIndex: 7, answers })}
               accessibilityRole="button"
               accessibilityLabel="Go back"
             >
@@ -66,49 +64,63 @@ export function EmailScreen({ navigation, route }) {
             </TouchableOpacity>
           </View>
 
-          {/* Email input pill */}
-          <View style={[styles.inputRow, email.length > 0 && styles.inputRowActive, showError && styles.inputRowError]}>
-            <TextInput
-              style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
-              value={email}
-              onChangeText={(v) => { setEmail(v); setDirty(true); }}
-              onBlur={() => setDirty(true)}
-              placeholder="your@email.com"
-              placeholderTextColor="rgba(255,255,255,0.35)"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoFocus
-              selectionColor="#ffffff"
-              cursorColor="#ffffff"
-              underlineColorAndroid="transparent"
-            />
-            {isValid ? (
-              <View style={styles.checkCircle}>
-                <Ionicons name="checkmark" size={12} color="#fff" />
-              </View>
-            ) : email.length > 0 ? (
-              <TouchableOpacity onPress={() => { setEmail(''); setDirty(false); }} accessibilityLabel="Clear email">
-                <Ionicons name="close-circle" size={16} color="rgba(255,255,255,0.4)" />
-              </TouchableOpacity>
-            ) : null}
+          <View style={styles.inputsCol}>
+            <View style={[styles.inputRow, firstName.length > 0 && styles.inputRowActive]}>
+              <TextInput
+                style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="First name"
+                placeholderTextColor="rgba(255,255,255,0.35)"
+                autoCapitalize="words"
+                autoCorrect={false}
+                autoFocus
+                returnKeyType="next"
+                onSubmitEditing={() => lastNameRef.current?.focus()}
+                selectionColor="#ffffff"
+                cursorColor="#ffffff"
+                underlineColorAndroid="transparent"
+              />
+              {firstName.length > 0 && (
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                </View>
+              )}
+            </View>
+
+            <View style={[styles.inputRow, lastName.length > 0 && styles.inputRowActive]}>
+              <TextInput
+                ref={lastNameRef}
+                style={[styles.input, Platform.OS === 'web' && styles.inputWeb]}
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Last name"
+                placeholderTextColor="rgba(255,255,255,0.35)"
+                autoCapitalize="words"
+                autoCorrect={false}
+                returnKeyType="done"
+                onSubmitEditing={handleContinue}
+                selectionColor="#ffffff"
+                cursorColor="#ffffff"
+                underlineColorAndroid="transparent"
+              />
+              {lastName.length > 0 && (
+                <View style={styles.checkCircle}>
+                  <Ionicons name="checkmark" size={12} color="#fff" />
+                </View>
+              )}
+            </View>
           </View>
-          {showError && (
-            <Text style={styles.errorText}>Please enter a valid email address</Text>
-          )}
 
           <View style={styles.footer}>
             <Button
-              label="Finish"
+              label="Next"
               onPress={handleContinue}
               disabled={!canContinue}
               variant="solid"
               color={canContinue ? '#000000' : 'rgba(255,255,255,0.15)'}
               textColor={canContinue ? '#FFFFFF' : 'rgba(255,255,255,0.35)'}
             />
-            <Text style={styles.legal}>
-              Your email is only used to notify you about your group. We never share it.
-            </Text>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -134,7 +146,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: contentPadding,
-    paddingBottom: 40,
   },
   headerBar: {
     position: 'absolute',
@@ -174,6 +185,9 @@ const styles = StyleSheet.create({
     lineHeight: 21,
     marginTop: 10,
   },
+  inputsCol: {
+    gap: 12,
+  },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -184,6 +198,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     paddingHorizontal: 24,
     gap: 12,
+  },
+  inputRowActive: {
+    borderColor: '#777',
+    backgroundColor: 'rgba(0,0,0,0.30)',
+  },
+  checkCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     flex: 1,
@@ -196,40 +224,9 @@ const styles = StyleSheet.create({
     caretColor: '#ffffff',
     accentColor: '#ffffff',
   },
-  inputRowActive: {
-    borderColor: '#777',
-    backgroundColor: 'rgba(0,0,0,0.30)',
-  },
-  inputRowError: {
-    borderColor: '#FF4D4D',
-  },
-  errorText: {
-    fontSize: 12,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: '#FF6B6B',
-    paddingLeft: 4,
-    marginTop: 6,
-  },
-  checkCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   footer: {
     marginTop: 'auto',
-    gap: 16,
-    paddingBottom: 8,
-  },
-  legal: {
-    fontSize: 11,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: 'rgba(255,255,255,0.35)',
-    textAlign: 'center',
-    lineHeight: 16,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
 });

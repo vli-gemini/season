@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   bgOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.50)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
   },
   container: {
     flex: 1,

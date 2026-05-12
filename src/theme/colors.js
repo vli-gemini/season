@@ -16,10 +16,10 @@ export const colors = {
   textSecondary: 'rgba(28, 26, 46, 0.58)',
   textMuted: 'rgba(28, 26, 46, 0.36)',
 
-  // Accent — soft lilac (bloom, early season)
-  accent: '#C9A8D4',
-  accentVibrant: '#A882BE',
-  accentSoft: 'rgba(201, 168, 212, 0.20)',
+  // Accent
+  accent: '#FFFFFF',
+  accentVibrant: '#000000',
+  accentSoft: 'rgba(255, 255, 255, 0.12)',
 
   // Accent — sea glass sage (late season)
   accentWarm: '#8FBFB0',
@@ -29,7 +29,7 @@ export const colors = {
   // Borders — whisper thin
   border: 'rgba(200, 185, 230, 0.22)',
   borderGlass: 'rgba(255, 255, 255, 0.50)',
-  borderActive: '#A882BE',
+  borderActive: '#000000',
 
   // Status
   success: '#6EA898',

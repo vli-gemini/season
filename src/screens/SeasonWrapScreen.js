@@ -8,6 +8,7 @@ import {
   Animated,
   Dimensions,
   Platform,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -15,7 +16,6 @@ import { LinearGradient } from '../components/Gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { contentPadding } from '../theme/layout';
-import { getSeasonGradient } from '../theme/seasonGradient';
 import { TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
@@ -73,9 +73,9 @@ function PageDots({ total, current }) {
 
 const dotStyles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 6, alignItems: 'center', justifyContent: 'center' },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.2)' },
-  dotActive: { width: 18, backgroundColor: colors.accentWarm },
-  dotDone: { backgroundColor: 'rgba(255,255,255,0.4)' },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.20)' },
+  dotActive: { width: 18, backgroundColor: colors.accent },
+  dotDone: { backgroundColor: 'rgba(255,255,255,0.40)' },
 });
 
 function MemberRow({ member, rank, highlight }) {
@@ -101,17 +101,17 @@ const memberStyles = StyleSheet.create({
     gap: 12,
     paddingVertical: 11,
     paddingHorizontal: 14,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     marginBottom: 8,
     overflow: 'hidden',
     position: 'relative',
   },
   rowHighlight: {
-    borderColor: colors.accentWarm + '55',
-    backgroundColor: colors.accentWarm + '0D',
+    borderColor: colors.accent + '55',
+    backgroundColor: colors.accent + '0D',
   },
   bar: {
     position: 'absolute',
@@ -124,7 +124,7 @@ const memberStyles = StyleSheet.create({
   rank: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     width: 22,
     textAlign: 'center',
   },
@@ -138,19 +138,19 @@ const memberStyles = StyleSheet.create({
   initials: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   info: { flex: 1 },
   name: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 1,
   },
   count: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
 });
 
@@ -172,7 +172,7 @@ function PageClose({ onNext }) {
 
       <View style={styles.section}>
         <View style={styles.closeCard}>
-          <Ionicons name="ribbon-outline" size={28} color={colors.accentWarm} style={{ marginBottom: 16 }} />
+          <Ionicons name="ribbon-outline" size={28} color={colors.accent} style={{ marginBottom: 16 }} />
           <Text style={styles.closeHeadline}>You made it.</Text>
           <Text style={styles.closeBody}>
             Thirty days. Some of them were hard. Some of them surprised you. But you stayed in the room — and that's the whole point.
@@ -203,7 +203,7 @@ function PageClose({ onNext }) {
       <View style={styles.ctaWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>See your wrap</Text>
-          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+          <Ionicons name="arrow-forward" size={15} color="#fff" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -246,7 +246,7 @@ function PageNumbers({ onNext }) {
             <Text style={styles.statRowLabel}>day best streak</Text>
           </View>
           <View style={[styles.statRowCard, styles.statRowCardAccent]}>
-            <Text style={[styles.statRowNum, { color: colors.accentWarm }]}>#{MY_RANK}</Text>
+            <Text style={[styles.statRowNum, { color: colors.accent }]}>#{MY_RANK}</Text>
             <Text style={styles.statRowLabel}>in your group</Text>
           </View>
         </View>
@@ -254,7 +254,7 @@ function PageNumbers({ onNext }) {
 
       <View style={styles.section}>
         <View style={styles.insightCard}>
-          <Ionicons name="trending-up-outline" size={16} color={colors.accentWarm} />
+          <Ionicons name="trending-up-outline" size={16} color={colors.accent} />
           <Text style={styles.insightText}>
             You showed up <Text style={styles.insightEm}>{ATTENDANCE_PCT}% of this season</Text> — more than most people ever do.
           </Text>
@@ -264,7 +264,7 @@ function PageNumbers({ onNext }) {
       <View style={styles.ctaWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>Your people</Text>
-          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+          <Ionicons name="arrow-forward" size={15} color="#fff" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -292,7 +292,7 @@ function PagePeople({ onNext, keptMemberIds = [] }) {
       {keptMemberIds.length > 0 && (
         <View style={styles.section}>
           <View style={styles.keptCard}>
-            <Ionicons name="heart-outline" size={15} color={colors.accentWarm} />
+            <Ionicons name="heart-outline" size={15} color={colors.accent} />
             <Text style={styles.keptText}>
               You asked to continue with{' '}
               <Text style={styles.keptNames}>
@@ -310,7 +310,7 @@ function PagePeople({ onNext, keptMemberIds = [] }) {
       <View style={styles.ctaWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>Your moment</Text>
-          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+          <Ionicons name="arrow-forward" size={15} color="#fff" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -338,7 +338,7 @@ function PageMoment({ onNext }) {
           <Text style={styles.reflectionBody}>
             A season isn't just about output. Something shifted for you in those 30 days — in how you work, what you make, or what you're willing to share.
           </Text>
-          <Text style={styles.reflectionBody} style={{ marginTop: 12, ...styles.reflectionBody }}>
+          <Text style={[styles.reflectionBody, { marginTop: 12 }]}>
             That's worth more than any number.
           </Text>
         </View>
@@ -347,13 +347,13 @@ function PageMoment({ onNext }) {
       <View style={styles.section}>
         <View style={styles.achieveRow}>
           <View
-            style={[styles.achieveBadge, { transform: [{ rotate: '-4deg' }], borderColor: colors.accentWarm + '70' }]}
+            style={[styles.achieveBadge, { transform: [{ rotate: '-4deg' }], borderColor: colors.accent + '70' }]}
             accessible
             accessibilityLabel="Season Complete badge"
           >
-            <View style={[styles.achieveBadgeInner, { borderColor: colors.accentWarm + '40' }]}>
-              <Ionicons name="trophy-outline" size={22} color={colors.accentWarm} />
-              <Text style={[styles.achieveLabel, { color: colors.accentWarm }]}>SEASON{'\n'}COMPLETE</Text>
+            <View style={[styles.achieveBadgeInner, { borderColor: colors.accent + '40' }]}>
+              <Ionicons name="trophy-outline" size={22} color={colors.accent} />
+              <Text style={[styles.achieveLabel, { color: colors.accent }]}>SEASON{'\n'}COMPLETE</Text>
             </View>
           </View>
           <View
@@ -382,7 +382,7 @@ function PageMoment({ onNext }) {
       <View style={styles.ctaWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>What's next</Text>
-          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+          <Ionicons name="arrow-forward" size={15} color="#fff" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -413,7 +413,7 @@ function PageNext({ navigation, freshStart, keptMemberIds = [] }) {
             </View>
             <View style={{ flex: 1 }} />
             <View style={styles.postcardStamp}>
-              <Ionicons name="compass-outline" size={15} color={colors.accentWarm} />
+              <Ionicons name="compass-outline" size={15} color={colors.accent} />
               <Text style={styles.postcardStampLabel}>NEXT</Text>
             </View>
           </View>
@@ -480,7 +480,7 @@ function PageNext({ navigation, freshStart, keptMemberIds = [] }) {
           style={styles.primaryBtn}
           onPress={() => navigation.navigate('Home')}
         >
-          <Ionicons name="checkmark" size={15} color={colors.background} />
+          <Ionicons name="checkmark" size={15} color="#fff" />
           <Text style={styles.primaryBtnText}>I'm ready</Text>
         </TouchableOpacity>
 
@@ -489,7 +489,7 @@ function PageNext({ navigation, freshStart, keptMemberIds = [] }) {
           onPress={() => navigation.navigate('Quiz', { questionIndex: 0, isMoreQuestions: true })}
         >
           <Text style={styles.secondaryBtnText}>Answer more matching questions</Text>
-          <Ionicons name="chevron-forward" size={14} color={colors.textSecondary} />
+          <Ionicons name="chevron-forward" size={14} color="rgba(255,255,255,0.65)" />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.ghostBtn} onPress={() => navigation.navigate('Home')}>
@@ -518,8 +518,8 @@ function PageSeason({ onNext }) {
 
       <View style={styles.section}>
         <View style={styles.closeCard}>
-          <Ionicons name="moon-outline" size={24} color={colors.textMuted} style={{ marginBottom: 14 }} />
-          <Text style={styles.closeHeadline} style={{ ...styles.closeHeadline, color: colors.textSecondary }}>This season is over.</Text>
+          <Ionicons name="moon-outline" size={24} color="rgba(255,255,255,0.50)" style={{ marginBottom: 14 }} />
+          <Text style={[styles.closeHeadline, { color: 'rgba(255,255,255,0.65)' }]}>This season is over.</Text>
           <Text style={styles.closeBody}>
             You didn't make it to the next round — that's okay. Life moves. Timing is everything. Season {WRAP_DATA.seasonNumber} is done, but here's what happened while it ran.
           </Text>
@@ -545,7 +545,7 @@ function PageSeason({ onNext }) {
       <View style={styles.ctaWrap}>
         <TouchableOpacity style={styles.primaryBtn} onPress={onNext}>
           <Text style={styles.primaryBtnText}>See what's next</Text>
-          <Ionicons name="arrow-forward" size={15} color={colors.background} />
+          <Ionicons name="arrow-forward" size={15} color="#fff" />
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -604,7 +604,7 @@ function PageRejoin({ navigation }) {
           style={[styles.primaryBtn, styles.primaryBtnAccent]}
           onPress={() => navigation.navigate('Quiz', { questionIndex: 0 })}
         >
-          <Ionicons name="arrow-forward-circle-outline" size={18} color={colors.background} />
+          <Ionicons name="arrow-forward-circle-outline" size={18} color="#fff" />
           <Text style={styles.primaryBtnText}>Join Season {WRAP_DATA.seasonNumber + 1}</Text>
         </TouchableOpacity>
 
@@ -658,16 +658,18 @@ export function SeasonWrapScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(TOTAL_DAYS, TOTAL_DAYS)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       {/* Header */}
       <View style={styles.header}>
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.20)' }]} />
         {showBack ? (
           <TouchableOpacity
             onPress={goBack}
@@ -675,7 +677,7 @@ export function SeasonWrapScreen({ navigation, route }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
         ) : (
           <View style={styles.backBtn} />
@@ -716,8 +718,10 @@ export function SeasonWrapScreen({ navigation, route }) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
   flex: { flex: 1 },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
 
   header: {
     flexDirection: 'row',
@@ -725,6 +729,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: contentPadding,
     paddingVertical: 14,
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   backBtn: { width: 38, padding: 4 },
 
@@ -741,7 +748,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 14,
@@ -749,7 +756,7 @@ const styles = StyleSheet.create({
   heroName: {
     fontSize: 38,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.5,
     marginBottom: 8,
     textShadowColor: 'rgba(176, 140, 220, 0.32)',
@@ -759,7 +766,7 @@ const styles = StyleSheet.create({
   heroDates: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.55)',
   },
 
   pageHero: {
@@ -771,7 +778,7 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 30,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -0.4,
     textAlign: 'center',
     marginBottom: 8,
@@ -779,7 +786,7 @@ const styles = StyleSheet.create({
   pageSubtitle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     textAlign: 'center',
     lineHeight: 21,
     paddingHorizontal: 8,
@@ -788,7 +795,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.accentWarm,
+    color: colors.accent,
     letterSpacing: 0.5,
   },
 
@@ -800,7 +807,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 10,
@@ -808,10 +815,10 @@ const styles = StyleSheet.create({
 
   // ── Page 0: Close ────────────────────────────
   closeCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 24,
     alignItems: 'center',
     shadowColor: '#000',
@@ -823,14 +830,14 @@ const styles = StyleSheet.create({
   closeHeadline: {
     fontSize: 22,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 12,
     textAlign: 'center',
   },
   closeBody: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 24,
     textAlign: 'center',
   },
@@ -838,17 +845,17 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
   },
 
   quickStats: {
     flexDirection: 'row',
     marginHorizontal: contentPadding,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     paddingVertical: 20,
     marginBottom: 28,
     shadowColor: '#000',
@@ -861,34 +868,31 @@ const styles = StyleSheet.create({
   quickStatNum: {
     fontSize: 34,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -1,
     marginBottom: 4,
-    textShadowColor: 'rgba(176, 140, 220, 0.26)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
   },
   quickStatLabel: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
     lineHeight: 16,
   },
   quickStatDivider: {
     width: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
 
   // ── Page 1: Numbers ──────────────────────────
   bigStatCard: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 24,
     alignItems: 'center',
-    shadowColor: colors.accentWarm,
+    shadowColor: colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 20,
@@ -897,7 +901,7 @@ const styles = StyleSheet.create({
   bigStatNum: {
     fontSize: 72,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -3,
     lineHeight: 78,
     textShadowColor: 'rgba(176, 140, 220, 0.28)',
@@ -907,54 +911,54 @@ const styles = StyleSheet.create({
   bigStatLabel: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     marginBottom: 16,
     marginTop: 4,
   },
   bigStatBar: {
     width: '100%',
     height: 3,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 2,
     marginBottom: 8,
     overflow: 'hidden',
   },
   bigStatFill: {
     height: '100%',
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accent,
     borderRadius: 2,
   },
   bigStatSub: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
 
   statRow: { flexDirection: 'row', gap: 10 },
   statRowCard: {
     flex: 1,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     padding: 16,
     alignItems: 'center',
   },
   statRowCardAccent: {
-    borderColor: colors.accentWarm + '44',
-    backgroundColor: colors.accentWarm + '0A',
+    borderColor: colors.accent + '44',
+    backgroundColor: colors.accent + '0A',
   },
   statRowNum: {
     fontSize: 32,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -1,
     marginBottom: 4,
   },
   statRowLabel: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
   },
 
@@ -962,21 +966,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: colors.accentWarm + '12',
+    backgroundColor: colors.accent + '12',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.accentWarm + '33',
+    borderColor: colors.accent + '33',
     padding: 14,
   },
   insightText: {
     flex: 1,
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 20,
   },
   insightEm: {
-    color: colors.accentWarm,
+    color: colors.accent,
     fontFamily: 'PlusJakartaSans_500Medium',
   },
 
@@ -985,10 +989,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 10,
-    backgroundColor: colors.accentWarm + '10',
+    backgroundColor: colors.accent + '10',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.accentWarm + '30',
+    borderColor: colors.accent + '30',
     padding: 14,
     marginTop: -8,
   },
@@ -996,20 +1000,20 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 20,
   },
   keptNames: {
-    color: colors.accentWarm,
+    color: colors.accent,
     fontFamily: 'PlusJakartaSans_500Medium',
   },
 
   // ── Page 3: Moment ───────────────────────────
   momentCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.09)',
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 24,
     alignItems: 'center',
     shadowColor: colors.accent,
@@ -1021,29 +1025,29 @@ const styles = StyleSheet.create({
   momentQuote: {
     fontSize: 16,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 26,
     textAlign: 'center',
     fontStyle: 'italic',
   },
   reflectionCard: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     padding: 20,
   },
   reflectionTitle: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     marginBottom: 8,
     letterSpacing: 0.3,
   },
   reflectionBody: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 22,
   },
   achieveRow: {
@@ -1079,7 +1083,7 @@ const styles = StyleSheet.create({
   achieveLabel: {
     fontSize: 9,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.60)',
     textAlign: 'center',
     lineHeight: 13,
     letterSpacing: 0.8,
@@ -1212,36 +1216,21 @@ const styles = StyleSheet.create({
   nextAvatarText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
-  },
-  nextCardTitle: {
-    fontSize: 18,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
-    marginBottom: 10,
-    textAlign: 'center',
-    marginTop: 0,
-  },
-  nextCardBody: {
-    fontSize: 14,
-    fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
-    lineHeight: 22,
-    textAlign: 'center',
+    color: '#fff',
   },
 
   hopeCard: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.16)',
     padding: 20,
     alignItems: 'center',
   },
   hopeText: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 24,
     textAlign: 'center',
     fontStyle: 'italic',
@@ -1250,37 +1239,37 @@ const styles = StyleSheet.create({
   hopeSub: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.accentWarm,
+    color: colors.accent,
     textAlign: 'center',
   },
 
   // ── Non-continued path ────────────────────────
   groupStatCard: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     padding: 24,
     alignItems: 'center',
   },
   groupStatNum: {
     fontSize: 56,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -2,
     marginBottom: 4,
   },
   groupStatLabel: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
     lineHeight: 20,
   },
   moreMembers: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
     marginTop: 4,
   },
@@ -1288,7 +1277,7 @@ const styles = StyleSheet.create({
   rejoinCard: {
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(168,155,255,0.2)',
+    borderColor: 'rgba(168,155,255,0.25)',
     overflow: 'hidden',
   },
   rejoinCardGradient: {
@@ -1297,13 +1286,13 @@ const styles = StyleSheet.create({
   rejoinTitle: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 10,
   },
   rejoinBody: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 22,
     marginBottom: 18,
   },
@@ -1316,7 +1305,7 @@ const styles = StyleSheet.create({
   rejoinFeatureLabel: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
   },
 
   // ── CTA buttons ──────────────────────────────
@@ -1330,7 +1319,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accentVibrant,
     borderRadius: 14,
     height: 52,
     gap: 8,
@@ -1341,23 +1330,23 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.background,
+    color: '#fff',
   },
   secondaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     height: 48,
     gap: 6,
   },
   secondaryBtnText: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
   },
   ghostBtn: {
     alignItems: 'center',
@@ -1366,6 +1355,6 @@ const styles = StyleSheet.create({
   ghostBtnText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.50)',
   },
 });

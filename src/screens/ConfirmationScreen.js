@@ -8,6 +8,14 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import ReAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing as REasing,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -97,6 +105,13 @@ const CYCLE = 5400;
 function PixelDandelion() {
   const anims = useRef(FLOAT_SEEDS.map(() => new Animated.Value(0))).current;
 
+  // Stem base — the ground pivot point in SVG coords.
+  const stemPX = PCX - 24; // 80
+  const stemPY = PCY + 58; // 186
+
+  // Reanimated shared value drives the wind sway (degrees).
+  const windDeg = useSharedValue(0);
+
   useEffect(() => {
     const loops = anims.map((anim, i) => {
       const { dur, delay } = PHYSICS[i];
@@ -114,101 +129,124 @@ function PixelDandelion() {
         ])
       );
     });
+
+    windDeg.value = withRepeat(
+      withSequence(
+        withTiming( 9,   { duration: 2400, easing: REasing.inOut(REasing.sin) }),
+        withTiming( 3,   { duration: 1800, easing: REasing.inOut(REasing.sin) }),
+        withTiming( 8,   { duration: 2000, easing: REasing.inOut(REasing.sin) }),
+        withTiming(-5,   { duration: 2600, easing: REasing.inOut(REasing.sin) }),
+        withTiming( 0,   { duration: 1600, easing: REasing.inOut(REasing.sin) }),
+      ),
+      -1,
+      false,
+    );
+
     loops.forEach(l => l.start());
-    return () => loops.forEach(l => l.stop());
+    return () => { loops.forEach(l => l.stop()); };
   }, []);
 
+  const windStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${windDeg.value}deg` }],
+    transformOrigin: `${stemPX}px ${stemPY}px`,
+  }));
+
+  // Anchor-pivot: a zero-size Animated.View sits at the stem base.
+  // The dandelion content is offset back so it draws at its original position.
+  // Rotating the anchor rotates everything around the stem base.
   return (
-    <View style={{ width: DW, height: DH }}>
-      {/* Static puff: stem + center dot + permanently attached spokes */}
-      <Svg width={DW} height={DH} style={{ position: 'absolute', top: 0, left: 0 }}>
-        <Path
-          d={`M${PCX},${PCY + 4} C${PCX - 5},${PCY + 26} ${PCX - 14},${PCY + 48} ${PCX - 24},${PCY + 58}`}
-          stroke={DCOLOR}
-          strokeWidth={DSW}
-          fill="none"
-        />
-        <Circle cx={PCX} cy={PCY} r={1.8} fill={DCOLOR} />
-        {SPOKE_ANGLES.map((angle, i) =>
-          DEPARTING_SPOKE_INDICES.has(i) ? null : (
+    <ReAnimated.View style={[{ width: DW, height: DH }, windStyle]}>
+      <View style={{ position: 'absolute', left: 0, top: 0, width: DW, height: DH }}>
+          {/* Static puff: stem + center dot + permanently attached spokes */}
+          <Svg width={DW} height={DH} style={{ position: 'absolute', top: 0, left: 0 }}>
             <Path
-              key={i}
-              d={spokeAndUmbrella(PCX, PCY, angle)}
+              d={`M${PCX},${PCY + 4} C${PCX - 5},${PCY + 26} ${PCX - 14},${PCY + 48} ${PCX - 24},${PCY + 58}`}
               stroke={DCOLOR}
               strokeWidth={DSW}
               fill="none"
-              strokeLinecap="round"
             />
-          )
-        )}
-      </Svg>
+            <Circle cx={PCX} cy={PCY} r={1.8} fill={DCOLOR} />
+            {SPOKE_ANGLES.map((angle, i) =>
+              DEPARTING_SPOKE_INDICES.has(i) ? null : (
+                <Path
+                  key={i}
+                  d={spokeAndUmbrella(PCX, PCY, angle)}
+                  stroke={DCOLOR}
+                  strokeWidth={DSW}
+                  fill="none"
+                  strokeLinecap="round"
+                />
+              )
+            )}
+          </Svg>
 
-      {/* Departing spokes — fade out as their seed lifts off, fade back as it resets */}
-      {FLOAT_SEEDS.map(([, , , spokeIdx], i) => {
-        const spokeOp = anims[i].interpolate({
-          inputRange: [0,  0.04, 0.15, 0.75, 0.92, 1],
-          outputRange: [1,  0.9,  0,    0,    0.6,  1],
-          extrapolate: 'clamp',
-        });
-        return (
-          <Animated.View
-            key={`sp${i}`}
-            style={{ position: 'absolute', top: 0, left: 0, width: DW, height: DH, opacity: spokeOp }}
-            pointerEvents="none"
-          >
-            <Svg width={DW} height={DH}>
-              <Path
-                d={spokeAndUmbrella(PCX, PCY, SPOKE_ANGLES[spokeIdx])}
-                stroke={DCOLOR}
-                strokeWidth={DSW}
-                fill="none"
-                strokeLinecap="round"
-              />
-            </Svg>
-          </Animated.View>
-        );
-      })}
+          {/* Departing spokes — fade out as their seed lifts off, fade back as it resets */}
+          {FLOAT_SEEDS.map(([, , , spokeIdx], i) => {
+            const spokeOp = anims[i].interpolate({
+              inputRange: [0,  0.04, 0.15, 0.75, 0.92, 1],
+              outputRange: [1,  0.9,  0,    0,    0.6,  1],
+              extrapolate: 'clamp',
+            });
+            return (
+              <Animated.View
+                key={`sp${i}`}
+                style={{ position: 'absolute', top: 0, left: 0, width: DW, height: DH, opacity: spokeOp }}
+                pointerEvents="none"
+              >
+                <Svg width={DW} height={DH}>
+                  <Path
+                    d={spokeAndUmbrella(PCX, PCY, SPOKE_ANGLES[spokeIdx])}
+                    stroke={DCOLOR}
+                    strokeWidth={DSW}
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              </Animated.View>
+            );
+          })}
 
-      {/* Floating seeds — curved trajectory, tumble rotation, natural fade */}
-      {FLOAT_SEEDS.map(([bx, by, angle], i) => {
-        const { x: xStops, y: yStops, rot: rotStops } = PHYSICS[i];
-        const tx  = anims[i].interpolate({ inputRange: T, outputRange: xStops });
-        const ty  = anims[i].interpolate({ inputRange: T, outputRange: yStops });
-        const rot = anims[i].interpolate({
-          inputRange: T,
-          outputRange: rotStops.map(r => `${r}deg`),
-        });
-        const op = anims[i].interpolate({
-          inputRange: [0,  0.05, 0.60, 0.82, 1],
-          outputRange: [0,  1,   0.88,  0.1,  0],
-          extrapolate: 'clamp',
-        });
-        return (
-          <Animated.View
-            key={`seed${i}`}
-            style={{
-              position: 'absolute',
-              left: bx - 22,
-              top: by - 26,
-              width: 44,
-              height: 52,
-              opacity: op,
-              transform: [{ translateX: tx }, { translateY: ty }, { rotate: rot }],
-            }}
-          >
-            <Svg width={44} height={52}>
-              <Path
-                d={spokeAndUmbrella(22, 26, angle, 15, 6, 5, 55)}
-                stroke={DCOLOR}
-                strokeWidth={DSW}
-                fill="none"
-                strokeLinecap="round"
-              />
-            </Svg>
-          </Animated.View>
-        );
-      })}
-    </View>
+          {/* Floating seeds — curved trajectory, tumble rotation, natural fade */}
+          {FLOAT_SEEDS.map(([bx, by, angle], i) => {
+            const { x: xStops, y: yStops, rot: rotStops } = PHYSICS[i];
+            const tx  = anims[i].interpolate({ inputRange: T, outputRange: xStops });
+            const ty  = anims[i].interpolate({ inputRange: T, outputRange: yStops });
+            const rot = anims[i].interpolate({
+              inputRange: T,
+              outputRange: rotStops.map(r => `${r}deg`),
+            });
+            const op = anims[i].interpolate({
+              inputRange: [0,  0.05, 0.60, 0.82, 1],
+              outputRange: [0,  1,   0.88,  0.1,  0],
+              extrapolate: 'clamp',
+            });
+            return (
+              <Animated.View
+                key={`seed${i}`}
+                style={{
+                  position: 'absolute',
+                  left: bx - 22,
+                  top: by - 26,
+                  width: 44,
+                  height: 52,
+                  opacity: op,
+                  transform: [{ translateX: tx }, { translateY: ty }, { rotate: rot }],
+                }}
+              >
+                <Svg width={44} height={52}>
+                  <Path
+                    d={spokeAndUmbrella(22, 26, angle, 15, 6, 5, 55)}
+                    stroke={DCOLOR}
+                    strokeWidth={DSW}
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              </Animated.View>
+            );
+          })}
+      </View>
+    </ReAnimated.View>
   );
 }
 

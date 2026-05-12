@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.45)',
   },
   timestampUnread: {
-    color: colors.accentVibrant,
+    color: '#fff',
     fontFamily: 'PlusJakartaSans_500Medium',
   },
   rowName: {
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: colors.accentVibrant,
+    backgroundColor: 'rgba(255,255,255,0.90)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 6,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   unreadBadgeText: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_700Bold',
-    color: '#FFFFFF',
+    color: '#1C1A2E',
   },
   separator: {
     height: 1,

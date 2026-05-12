@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__lazyweb__lazyweb_search",
+      "Bash(open *)"
+    ]
+  }
+}

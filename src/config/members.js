@@ -4,17 +4,18 @@ export const ME = {
   initials: 'YO',
   color: '#C4A97D',
   isMe: true,
+  avatar: require('../../assets/avatars/me.jpg'),
 };
 
 // The 7 other members in the group (+ ME = 8 total)
 export const GROUP_MEMBERS = [
-  { id: '1', name: 'Sarah Liao',    initials: 'SL', color: '#8B7FF5' },
-  { id: '2', name: 'Mark Smith',    initials: 'MS', color: '#5ECA8A' },
-  { id: '3', name: 'Priya Nair',    initials: 'PN', color: '#F4A261' },
-  { id: '4', name: 'Jordan Lee',    initials: 'JL', color: '#E76F51' },
-  { id: '5', name: 'Alex Chen',     initials: 'AC', color: '#64B5F6' },
-  { id: '6', name: 'Maya Torres',   initials: 'MT', color: '#EC407A' },
-  { id: '7', name: 'Kai Nakamura',  initials: 'KN', color: '#26C6DA' },
+  { id: '1', name: 'Sarah Liao',    initials: 'SL', color: '#8B7FF5', avatar: require('../../assets/avatars/sarah.jpg') },
+  { id: '2', name: 'Mark Smith',    initials: 'MS', color: '#5ECA8A', avatar: require('../../assets/avatars/mark.jpg') },
+  { id: '3', name: 'Priya Nair',    initials: 'PN', color: '#F4A261', avatar: require('../../assets/avatars/priya.jpg') },
+  { id: '4', name: 'Jordan Lee',    initials: 'JL', color: '#E76F51', avatar: require('../../assets/avatars/jordan.jpg') },
+  { id: '5', name: 'Alex Chen',     initials: 'AC', color: '#64B5F6', avatar: require('../../assets/avatars/alex.jpg') },
+  { id: '6', name: 'Maya Torres',   initials: 'MT', color: '#EC407A', avatar: require('../../assets/avatars/maya.jpg') },
+  { id: '7', name: 'Kai Nakamura',  initials: 'KN', color: '#26C6DA', avatar: require('../../assets/avatars/kai.jpg') },
 ];
 
 // All 8 people including you — for group chat display

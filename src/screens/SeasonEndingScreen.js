@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
@@ -19,7 +20,6 @@ import { contentPadding } from '../theme/layout';
 
 const CARD_GAP = 10;
 const CARD_WIDTH = (Dimensions.get('window').width - contentPadding * 2 - CARD_GAP) / 2;
-import { getSeasonGradient } from '../theme/seasonGradient';
 import { CURRENT_DAY, TOTAL_DAYS } from '../config/season';
 import { GROUP_MEMBERS } from '../config/members';
 import { Embers } from '../components/Embers';
@@ -64,7 +64,7 @@ function Avatar({ member, size = 48, selected }) {
             borderRadius: size / 2,
             backgroundColor: member.color + (selected ? '55' : '22'),
             borderWidth: selected ? 2 : 1,
-            borderColor: selected ? member.color : 'rgba(255,255,255,0.1)',
+            borderColor: selected ? member.color : 'rgba(255,255,255,0.18)',
           },
         ]}
       >
@@ -176,17 +176,17 @@ export function SeasonEndingScreen({ navigation, route }) {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <LinearGradient
-        colors={getSeasonGradient(TOTAL_DAYS, TOTAL_DAYS)}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFill}
+      <Image
+        source={require('../../assets/splash background.png')}
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
+        resizeMode="cover"
       />
+      <View style={[StyleSheet.absoluteFill, styles.bgOverlay]} />
       <Embers />
 
       <View style={styles.header}>
-        <BlurView intensity={22} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.04)' }]} />
+        <BlurView intensity={70} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(0,0,0,0.20)' }]} />
         {showBack ? (
           <TouchableOpacity
             onPress={handleBack}
@@ -194,7 +194,7 @@ export function SeasonEndingScreen({ navigation, route }) {
             accessibilityLabel="Back"
             accessibilityRole="button"
           >
-            <Ionicons name="chevron-back" size={22} color={colors.textSecondary} />
+            <Ionicons name="chevron-back" size={22} color="rgba(255,255,255,0.70)" />
           </TouchableOpacity>
         ) : (
           <View style={{ width: 38 }} />
@@ -225,7 +225,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   <Ionicons
                     name={isEnded ? 'ribbon-outline' : 'time-outline'}
                     size={20}
-                    color={colors.accentWarm}
+                    color={colors.accent}
                     style={{ marginBottom: 10 }}
                   />
                   <Text style={styles.contextTitle}>
@@ -260,7 +260,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                     <Ionicons
                       name="shuffle-outline"
                       size={18}
-                      color={freshStart ? colors.background : colors.textMuted}
+                      color={freshStart ? '#fff' : 'rgba(255,255,255,0.55)'}
                     />
                   </View>
                   <View style={styles.freshStartTextWrap}>
@@ -272,7 +272,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                     </Text>
                   </View>
                   {freshStart && (
-                    <Ionicons name="checkmark-circle" size={20} color={colors.accentWarm} />
+                    <Ionicons name="checkmark-circle" size={20} color={colors.accent} />
                   )}
                 </TouchableOpacity>
 
@@ -317,7 +317,7 @@ export function SeasonEndingScreen({ navigation, route }) {
               </View>
 
               <View style={styles.disclaimerWrap}>
-                <Ionicons name="information-circle-outline" size={15} color={colors.textMuted} style={{ marginTop: 1 }} />
+                <Ionicons name="information-circle-outline" size={15} color="rgba(255,255,255,0.40)" style={{ marginTop: 1 }} />
                 <Text style={styles.disclaimerText}>
                   Your preferences help us, but we can't guarantee your next group will include these people. We'll do our best.
                 </Text>
@@ -336,13 +336,13 @@ export function SeasonEndingScreen({ navigation, route }) {
                     onPress={() => setView('review-prefs')}
                   >
                     <View style={styles.prefsRowIcon}>
-                      <Ionicons name="document-text-outline" size={16} color={colors.textSecondary} />
+                      <Ionicons name="document-text-outline" size={16} color="rgba(255,255,255,0.65)" />
                     </View>
                     <View style={styles.prefsRowText}>
                       <Text style={styles.prefsRowTitle}>Review your preferences</Text>
                       <Text style={styles.prefsRowSub}>See what you told us last time, and edit if anything's changed</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.40)" />
                   </TouchableOpacity>
 
                   <View style={styles.prefsDivider} />
@@ -353,13 +353,13 @@ export function SeasonEndingScreen({ navigation, route }) {
                     onPress={() => setView('more-questions')}
                   >
                     <View style={styles.prefsRowIcon}>
-                      <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
+                      <Ionicons name="add-circle-outline" size={16} color="rgba(255,255,255,0.65)" />
                     </View>
                     <View style={styles.prefsRowText}>
                       <Text style={styles.prefsRowTitle}>Answer more questions</Text>
                       <Text style={styles.prefsRowSub}>Help us find people who are a better fit for how you work</Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.40)" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -372,7 +372,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   <Text style={styles.ctaBtnText}>
                     {isEnded ? "I'm in for another season" : 'Save my preferences'}
                   </Text>
-                  <Ionicons name="arrow-forward" size={16} color={colors.background} />
+                  <Ionicons name="arrow-forward" size={16} color="#fff" />
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.skipBtn} onPress={() => navigation.navigate('Home')}>
@@ -403,7 +403,7 @@ export function SeasonEndingScreen({ navigation, route }) {
 
               <View style={styles.section}>
                 <View style={styles.contextCard}>
-                  <Ionicons name="document-text-outline" size={20} color={colors.textMuted} style={{ marginBottom: 10 }} />
+                  <Ionicons name="document-text-outline" size={20} color="rgba(255,255,255,0.50)" style={{ marginBottom: 10 }} />
                   <Text style={styles.contextBody}>
                     These are the answers you submitted when you joined. They help us find the right group for you. Nothing here is mandatory to change — only update what no longer feels true.
                   </Text>
@@ -424,7 +424,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   style={styles.ctaBtn}
                   onPress={() => setView('edit-prefs')}
                 >
-                  <Ionicons name="pencil-outline" size={16} color={colors.background} />
+                  <Ionicons name="pencil-outline" size={16} color="#fff" />
                   <Text style={styles.ctaBtnText}>Edit my preferences</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={() => setView('main')}>
@@ -462,7 +462,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                       setEditedAnswers((prev) => ({ ...prev, [q.id]: text }))
                     }
                     placeholder="Your answer…"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor="rgba(255,255,255,0.30)"
                     multiline
                     textAlignVertical="top"
                   />
@@ -474,7 +474,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   style={styles.ctaBtn}
                   onPress={() => setView('review-prefs')}
                 >
-                  <Ionicons name="checkmark" size={16} color={colors.background} />
+                  <Ionicons name="checkmark" size={16} color="#fff" />
                   <Text style={styles.ctaBtnText}>Save changes</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={() => setView('review-prefs')}>
@@ -496,7 +496,7 @@ export function SeasonEndingScreen({ navigation, route }) {
 
               <View style={styles.section}>
                 <View style={styles.contextCard}>
-                  <Ionicons name="people-outline" size={20} color={colors.accentWarm} style={{ marginBottom: 10 }} />
+                  <Ionicons name="people-outline" size={20} color={colors.accent} style={{ marginBottom: 10 }} />
                   <Text style={styles.contextBody}>
                     These are optional — answer as many or as few as you'd like. The more context you give us, the better we can match you next season.
                   </Text>
@@ -513,7 +513,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                       setMoreAnswers((prev) => ({ ...prev, [q.id]: text }))
                     }
                     placeholder="Your answer…"
-                    placeholderTextColor={colors.textMuted}
+                    placeholderTextColor="rgba(255,255,255,0.30)"
                     multiline
                     textAlignVertical="top"
                   />
@@ -525,7 +525,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   style={styles.ctaBtn}
                   onPress={() => setView('main')}
                 >
-                  <Ionicons name="checkmark" size={16} color={colors.background} />
+                  <Ionicons name="checkmark" size={16} color="#fff" />
                   <Text style={styles.ctaBtnText}>Save and go back</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={() => setView('main')}>
@@ -545,7 +545,7 @@ export function SeasonEndingScreen({ navigation, route }) {
               <View style={styles.section}>
                 <View style={styles.confirmCard}>
                   <View style={styles.confirmIconWrap}>
-                    <Ionicons name="checkmark-circle" size={40} color={colors.accentWarm} />
+                    <Ionicons name="checkmark-circle" size={40} color={colors.accent} />
                   </View>
                   <Text style={styles.confirmTitle}>You're on the list.</Text>
                   <Text style={styles.confirmBody}>
@@ -578,10 +578,10 @@ export function SeasonEndingScreen({ navigation, route }) {
                         })
                       }
                     >
-                      <Text style={[styles.confirmHomeBtnText, { color: colors.accentWarm }]}>
+                      <Text style={[styles.confirmHomeBtnText, { color: colors.accent }]}>
                         See your season wrap
                       </Text>
-                      <Ionicons name="arrow-forward" size={14} color={colors.accentWarm} />
+                      <Ionicons name="arrow-forward" size={14} color={colors.accent} />
                     </TouchableOpacity>
                   )}
                   <TouchableOpacity
@@ -594,7 +594,7 @@ export function SeasonEndingScreen({ navigation, route }) {
               </View>
 
               <View style={styles.changeNudge}>
-                <Ionicons name="refresh-outline" size={14} color={colors.textMuted} />
+                <Ionicons name="refresh-outline" size={14} color="rgba(255,255,255,0.40)" />
                 <Text style={styles.changeNudgeText}>
                   Changed your mind about who you'd like to continue with?{' '}
                   <Text
@@ -620,7 +620,7 @@ export function SeasonEndingScreen({ navigation, route }) {
 
               <View style={styles.section}>
                 <View style={styles.contextCard}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={20} color={colors.textMuted} style={{ marginBottom: 10 }} />
+                  <Ionicons name="chatbubble-ellipses-outline" size={20} color="rgba(255,255,255,0.50)" style={{ marginBottom: 10 }} />
                   <Text style={styles.contextTitle}>What's not working for you?</Text>
                   <Text style={styles.contextBody}>
                     You don't have to answer — but if something isn't right, we'd genuinely like to know.
@@ -632,7 +632,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                 <TextInput
                   style={styles.reasonInput}
                   placeholder="Tell us what's not working…"
-                  placeholderTextColor={colors.textMuted}
+                  placeholderTextColor="rgba(255,255,255,0.30)"
                   value={optoutReason}
                   onChangeText={setOptoutReason}
                   multiline
@@ -648,7 +648,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   onPress={() => setView('optout-confirm')}
                 >
                   <Text style={styles.ctaBtnText}>Continue</Text>
-                  <Ionicons name="arrow-forward" size={16} color={colors.background} />
+                  <Ionicons name="arrow-forward" size={16} color="#fff" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.skipBtn} onPress={() => setView('main')}>
                   <Text style={styles.skipText}>Actually, never mind</Text>
@@ -674,7 +674,7 @@ export function SeasonEndingScreen({ navigation, route }) {
 
               <View style={styles.section}>
                 <View style={styles.contextCard}>
-                  <Ionicons name="heart-outline" size={20} color={colors.accentWarm} style={{ marginBottom: 10 }} />
+                  <Ionicons name="heart-outline" size={20} color={colors.accent} style={{ marginBottom: 10 }} />
                   <Text style={styles.contextTitle}>
                     We built Season for people exactly like you.
                   </Text>
@@ -690,7 +690,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                   style={styles.ctaBtn}
                   onPress={() => setView('main')}
                 >
-                  <Ionicons name="refresh-outline" size={16} color={colors.background} />
+                  <Ionicons name="refresh-outline" size={16} color="#fff" />
                   <Text style={styles.ctaBtnText}>Give it another try</Text>
                 </TouchableOpacity>
 
@@ -719,18 +719,18 @@ export function SeasonEndingScreen({ navigation, route }) {
               <View style={styles.section}>
                 <View style={styles.confirmCard}>
                   <View style={styles.confirmIconWrap}>
-                    <Ionicons name="moon-outline" size={36} color={colors.textMuted} />
+                    <Ionicons name="moon-outline" size={36} color="rgba(255,255,255,0.50)" />
                   </View>
 
                   <View style={styles.optoutDetailRow}>
-                    <Ionicons name="notifications-off-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="notifications-off-outline" size={16} color="rgba(255,255,255,0.50)" />
                     <Text style={styles.optoutDetailText}>
                       Notifications have been turned off for your account.
                     </Text>
                   </View>
 
                   <View style={styles.optoutDetailRow}>
-                    <Ionicons name="refresh-circle-outline" size={16} color={colors.textMuted} />
+                    <Ionicons name="refresh-circle-outline" size={16} color="rgba(255,255,255,0.50)" />
                     <Text style={styles.optoutDetailText}>
                       Changed your mind? You can always rejoin and re-enable notifications from your Profile.
                     </Text>
@@ -742,7 +742,7 @@ export function SeasonEndingScreen({ navigation, route }) {
                       onPress={() => navigation.navigate('Profile')}
                     >
                       <Text style={styles.optoutProfileBtnText}>Go to Profile</Text>
-                      <Ionicons name="person-outline" size={14} color={colors.textSecondary} />
+                      <Ionicons name="person-outline" size={14} color="rgba(255,255,255,0.65)" />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.confirmHomeBtn}
@@ -764,8 +764,10 @@ export function SeasonEndingScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
+  safe: { flex: 1, backgroundColor: '#000' },
   flex: { flex: 1 },
+  bgImage: { width: '100%', height: '100%' },
+  bgOverlay: { backgroundColor: 'rgba(0,0,0,0.52)' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -773,7 +775,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: contentPadding,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.07)',
+    borderBottomColor: 'rgba(255,255,255,0.12)',
     overflow: 'hidden',
   },
   backBtn: { padding: 4, width: 38 },
@@ -788,7 +790,7 @@ const styles = StyleSheet.create({
   eyebrow: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     letterSpacing: 1.5,
     textTransform: 'uppercase',
     marginBottom: 14,
@@ -796,17 +798,17 @@ const styles = StyleSheet.create({
   heroCountdown: {
     fontSize: 42,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.accentWarm,
+    color: colors.accent,
     letterSpacing: -1,
     marginBottom: 6,
-    textShadowColor: 'rgba(255, 133, 38, 0.45)',
+    textShadowColor: 'rgba(143, 191, 176, 0.45)',
     textShadowOffset: { width: 0, height: 3 },
     textShadowRadius: 16,
   },
   heroTitle: {
     fontSize: 26,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 16,
     letterSpacing: -0.3,
     textAlign: 'center',
@@ -814,34 +816,34 @@ const styles = StyleSheet.create({
   heroDates: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.55)',
     marginTop: -8,
   },
   progressTrack: {
     width: '100%',
     height: 2,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 2,
     marginBottom: 8,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accent,
     borderRadius: 2,
   },
   progressCaption: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
   },
 
   statsRow: {
     flexDirection: 'row',
     marginHorizontal: contentPadding,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 20,
     marginBottom: 24,
     shadowColor: '#000',
@@ -854,22 +856,19 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 36,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     letterSpacing: -1,
     marginBottom: 2,
-    textShadowColor: 'rgba(176, 140, 220, 0.28)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
   },
   statLabel: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     textAlign: 'center',
   },
   statDivider: {
     width: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     marginHorizontal: 12,
   },
 
@@ -878,10 +877,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   contextCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
@@ -892,27 +891,27 @@ const styles = StyleSheet.create({
   contextTitle: {
     fontSize: 17,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 8,
     lineHeight: 24,
   },
   contextBody: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 22,
   },
 
   sectionTitle: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 6,
   },
   sectionSubtitle: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.50)',
     lineHeight: 20,
     marginBottom: 16,
   },
@@ -921,50 +920,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     paddingVertical: 14,
     paddingHorizontal: 14,
     marginBottom: 4,
   },
   freshStartCardActive: {
-    borderColor: colors.accentWarm,
-    backgroundColor: colors.accentWarm + '12',
+    borderColor: colors.accent,
+    backgroundColor: colors.accent + '20',
   },
   freshStartIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   freshStartIconActive: {
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accent,
   },
   freshStartTextWrap: { flex: 1 },
   freshStartTitle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 2,
   },
   freshStartTitleActive: {
-    color: colors.accentWarm,
+    color: colors.accent,
   },
   freshStartSub: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     lineHeight: 17,
   },
 
   orDivider: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.40)',
     textAlign: 'center',
     letterSpacing: 0.5,
     marginVertical: 14,
@@ -1059,15 +1058,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     lineHeight: 18,
   },
 
   prefsCard: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     overflow: 'hidden',
   },
   prefsRow: {
@@ -1081,7 +1080,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1089,18 +1088,18 @@ const styles = StyleSheet.create({
   prefsRowTitle: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 2,
   },
   prefsRowSub: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     lineHeight: 17,
   },
   prefsDivider: {
     height: 1,
-    backgroundColor: colors.border,
+    backgroundColor: 'rgba(255,255,255,0.12)',
     marginHorizontal: 16,
   },
 
@@ -1109,39 +1108,39 @@ const styles = StyleSheet.create({
   },
   qnaItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: 'rgba(255,255,255,0.12)',
   },
   qnaQuestion: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.50)',
     marginBottom: 6,
     lineHeight: 18,
   },
   qnaAnswer: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     lineHeight: 22,
   },
 
   editQuestionLabel: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     marginBottom: 8,
     lineHeight: 20,
   },
   editInput: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     minHeight: 80,
     lineHeight: 22,
   },
@@ -1155,18 +1154,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.accentWarm,
+    backgroundColor: colors.accentVibrant,
     borderRadius: 14,
     height: 52,
     gap: 8,
   },
   ctaBtnNeutral: {
-    backgroundColor: colors.textPrimary,
+    backgroundColor: 'rgba(255,255,255,0.18)',
   },
   ctaBtnText: {
     fontSize: 15,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.background,
+    color: '#fff',
   },
   skipBtn: {
     alignItems: 'center',
@@ -1175,7 +1174,7 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.50)',
   },
   leaveBtn: {
     alignItems: 'center',
@@ -1185,15 +1184,15 @@ const styles = StyleSheet.create({
   leaveText: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted + '99',
+    color: 'rgba(255,255,255,0.35)',
     textDecorationLine: 'underline',
   },
 
   confirmCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.18)',
     padding: 28,
     alignItems: 'center',
   },
@@ -1201,14 +1200,14 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: 22,
     fontFamily: 'PlusJakartaSans_300Light',
-    color: colors.textPrimary,
+    color: '#fff',
     marginBottom: 10,
     textAlign: 'center',
   },
   confirmBody: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 22,
     textAlign: 'center',
     marginBottom: 20,
@@ -1231,13 +1230,13 @@ const styles = StyleSheet.create({
   confirmAvatarText: {
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_600SemiBold',
-    color: colors.textPrimary,
+    color: '#fff',
   },
   confirmHomeBtn: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
@@ -1245,14 +1244,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    borderColor: colors.accentWarm + '55',
-    backgroundColor: colors.accentWarm + '10',
+    borderColor: colors.accent + '55',
+    backgroundColor: colors.accent + '18',
     marginBottom: 10,
   },
   confirmHomeBtnText: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
   },
 
   changeNudge: {
@@ -1267,30 +1266,30 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.45)',
     lineHeight: 18,
   },
   changeNudgeLink: {
-    color: colors.accentWarm,
+    color: colors.accent,
     textDecorationLine: 'underline',
   },
 
   reasonInput: {
-    backgroundColor: colors.backgroundCard,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.16)',
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textPrimary,
+    color: '#fff',
     minHeight: 120,
   },
   charCount: {
     fontSize: 11,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textMuted,
+    color: 'rgba(255,255,255,0.40)',
     textAlign: 'right',
     marginTop: 6,
   },
@@ -1306,7 +1305,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: 'PlusJakartaSans_400Regular',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.65)',
     lineHeight: 20,
   },
   optoutBtnGroup: {
@@ -1319,16 +1318,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(255,255,255,0.10)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.18)',
     paddingHorizontal: 24,
     paddingVertical: 12,
   },
   optoutProfileBtnText: {
     fontSize: 14,
     fontFamily: 'PlusJakartaSans_500Medium',
-    color: colors.textSecondary,
+    color: 'rgba(255,255,255,0.70)',
   },
 });
